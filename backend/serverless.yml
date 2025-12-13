@@ -1,0 +1,37 @@
+service: backend-lambda
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-southeast-2
+  stage: dev
+  environment:
+    NODE_ENV: production
+    DB_NAME: webproject
+    DB_USER: admin
+    DB_PASSWORD: -HipHop97424-
+    DB_HOST: database-1.c9ssams0u73d.ap-southeast-2.rds.amazonaws.com
+    DB_PORT: 3306
+    DB_CA_PATH: certs/isrgrootx1.pem
+    PROTOCOLE: https
+    CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com
+    CLIENT_PORT: 5748
+    SERVER_PORT: 8080
+    SERVER_HOST: backend-production-2f14.up.railway.app
+    JWT_SECRET: 095d69926a23f86c
+    JWT_REFRESH_SECRET: 83ez354d8ht4tsgs
+
+
+functions:
+  api:
+    handler: handler.handler
+    url:
+      authType: NONE
+      cors: false
+    events:
+      - http:
+          path: /
+          method: ANY
+      - http:
+          path: /{proxy+}
+          method: ANY
