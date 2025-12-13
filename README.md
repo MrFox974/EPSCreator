@@ -6,7 +6,6 @@
 -	[Installer le frontend (React) sur Amplify]()
 -	[Installer le backend (Nodejs) sur Lambda]()
 -	[Installer la base de données sur RDS MySQL]()
--	[Les packages de base]()
 
 ## 1. Créer un projet de A à Z
 ### 1.	Créer le backend (Node JS)
@@ -226,3 +225,30 @@ C'est maintenant que le rôle IAM/personne créer avec les autorisations va nous
 et voilà. Le fichier ```.github/workflows/deploy.yml``` est déjà pré-configuré. Il faut simplement connecté ton projet backend à ton github (ce qui est déjà fait normalement, tu entre les éléments important et c'est bon !
 
 Ah et dernière chose, tu as certe un fichier ```.env``` dans lequel tu as tes variables d'environnement local. Mais ceux qui seront inhérent à lambda doivent être renseigner dans ```serverless.yml``` (je t'invite à y jetter un oeil afin de comprendre l'organisation des variables d'environnement)
+
+
+## 5. Installer la base de données sur RDS MySQL
+
+Là, c'est le plus compliqué !
+
+1. Déjà on note dans la barre de recherche RDS et on selectionne ```Aurora et RDS```.
+2. On va dans ```Bases de données```
+3. ```Création facile``` et on selectionne ```MySQL```.
+4. Important, on selectionne ```Offre gratuite```
+5. Puis on remplie les autres données ```Identifiant d'instance de base de données ```(invente), ```Identifiant principal```. Pour ```Gestion des informations d’identification``` tu met ```Autogéré```, tu créés un ```mot de passe```.
+6. ```Configuration supplémentaire``` > ```Accès publique```
+7. et tu fait ```créer la base de donnée```.
+8. Tu selectionne ta base.
+9. Désormais tu peux normalement t'y connecter à distance ```MySQL Workbench```. Tu as toutes les infos.
+10. Ces infos tu dois une fois de plus les renseigner dans les variables d'environnement de ```serverless.yml```.
+
+
+
+Veille à ce qu'ils (amplify, lambda et RDS) soient tous dans la même région stratégique.
+
+Donc ensuite je crois qu'il faut le relier à un ```VPC``` (réseau privé virtuel dans le cloud). Puis le lié à un ```groupe de sécurité``` (EC2). Cela permet de configurer les ```règles entrantes``` afin d'autoriser en type ```MYSQL/Aurora``` et source ```0.0.0.0/0``` afin de pouvoir s'y connecter.
+
+
+
+
+
