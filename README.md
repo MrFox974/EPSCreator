@@ -9,7 +9,8 @@
 
 ## 1. Créer un projet de A à Z
 ### 1.	Créer le backend (Node JS)
-@@ -56,7 +57,230 @@ A l'intérieur de ce dernier on va initialiser un nouveau projet vite.
+A l'intérieur de ce dernier on va initialiser un nouveau projet vite.
+```
 npm create vite@latest . -- --template react
 ```
 Normalement, il devrait te demander quelques infos et de l'instaler. Tu suis la procédure.
