@@ -256,55 +256,64 @@ Donc ensuite je crois qu'il faut le relier à un ```VPC``` (réseau privé virtu
 Voici un mini “mémo Git” que tu peux coller dans ton README.md (en français, avec les commandes de base les plus utiles).
 
 Initialiser un dépôt
-bash
+```
 git init
+```
 Initialise un dépôt Git vide dans le dossier courant.
 
 Lier le dépôt à GitHub
-bash
+```
 git remote add origin https://github.com/TON_USER/TON_REPO.git
 git remote -v
-remote add origin : ajoute le dépôt distant (GitHub) sous le nom origin.
-
+```
+```remote add origin``` : ajoute le dépôt distant (GitHub) sous le nom origin.
+```
 remote -v : affiche les URLs configurées pour origin.​
-
+```
 Suivre les fichiers et créer un commit
-bash
+```
 git status
 git add .
 git commit -m "Message de commit"
-status : montre les fichiers modifiés, ajoutés ou supprimés.
+```
+```status``` : montre les fichiers modifiés, ajoutés ou supprimés.
 
-add . : ajoute tous les fichiers suivis/non suivis à l’index (zone de préparation).
+```add .``` : ajoute tous les fichiers suivis/non suivis à l’index (zone de préparation).
 
-commit -m : enregistre un “snapshot” de l’état actuel avec un message.​
+```commit -m``` : enregistre un “snapshot” de l’état actuel avec un message.​
 
 Envoyer le code vers GitHub
-bash
+```
 git push -u origin main
+```
 Envoie la branche locale main vers la branche distante main.
 
-L’option -u mémorise le lien : les prochains git push pourront se faire sans arguments.​
+L’option ```-u``` mémorise le lien : les prochains git push pourront se faire sans arguments.​
 
 Récupérer les changements depuis GitHub
-bash
+```
 git pull origin main
-# ou pour éviter les commits de merge automatiques :
+```
+ou pour éviter les commits de merge automatiques :
+```
 git pull origin main --rebase
-pull : récupère les nouveaux commits distants et les fusionne dans ta branche locale.
+```
+```pull``` : récupère les nouveaux commits distants et les fusionne dans ta branche locale.
 
---rebase : “rejoue” tes commits locaux après ceux du remote pour garder un historique plus linéaire.​
+```--rebase``` : “rejoue” tes commits locaux après ceux du remote pour garder un historique plus linéaire.​
 
 Changer / réinitialiser la remote
-bash
+```
 git remote remove origin
 git remote add origin https://github.com/TON_USER/NOUVEAU_REPO.git
+```
 Supprime l’ancienne remote et en ajoute une nouvelle (pratique pour “rebrancher” un projet sur un autre repo).​
 
 Annuler ou revenir en arrière (local)
-bash
+```
 git checkout -- chemin/fichier.js    # annule les modifs non indexées sur un fichier
 git reset HEAD chemin/fichier.js     # enlève un fichier de l'index (après git add)
 git reset --hard HEAD                # remet tout l’arbre de travail sur le dernier commit
-À utiliser avec prudence, surtout reset --hard qui efface les changements non commités.
+```
+À utiliser avec prudence, surtout ```reset --hard``` qui efface les changements non commités.
 
