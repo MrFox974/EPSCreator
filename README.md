@@ -6,6 +6,7 @@
 -	[Installer le frontend (React) sur Amplify]()
 -	[Installer le backend (Nodejs) sur Lambda]()
 -	[Installer la base de données sur RDS MySQL]()
+-	[Mémo GitHUB]()
 
 ## 1. Créer un projet de A à Z
 ### 1.	Créer le backend (Node JS)
