@@ -9,7 +9,7 @@
 -	[Mémo GitHUB]()
 
 ## 1. Créer un projet de A à Z
-### 1.	Créer le backend (Node JS)
+### 1.	Créer le frontend (React JS) ```/frontend```
 A l'intérieur de ce dernier on va initialiser un nouveau projet vite.
 ```
 npm create vite@latest . -- --template react
@@ -156,7 +156,21 @@ export default App
 ```
 Nous sommes enfin prêt pour commencer à travailler sérieusement !
 
-## 2. Créer les packages de bases
+### 1.	Créer le backend (Node JS) ```/backend```
+
+## 1. Initialisation du projet
+On ouvre la console et on initialise le projet en faisant :
+```
+npm init
+```
+Il va nous créer le fichier de base ```package.json```.
+Il nous faut ensuite créer les fichiers et repertoires de ```express js```.
+```
+npm install express
+```
+Plusieurs vont alors se créer notamment le repertoire ```/node_modules``` contenant les dépendences et le fichier ```package_lock.js```
+
+## 2. Créer les autres packages de bases côté 
 
 Voici la liste des packages importants à avoir selon moi :
 ```json
@@ -179,7 +193,7 @@ Voici la liste des packages importants à avoir selon moi :
 et le code pour les installer tous d'un coup ! (On ne prend pas en compte ```express``` et ```tailwindcss``` déjà préalablement installés.
 
 ```
-npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql mysql2 sequelize serverless-http
+npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql2 sequelize serverless-http
 npm install --save-dev nodemon
 ```
 
