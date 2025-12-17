@@ -196,6 +196,57 @@ et le code pour les installer tous d'un coup ! (On ne prend pas en compte ```exp
 npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql2 sequelize serverless-http
 npm install --save-dev nodemon
 ```
+## 3. Configuration
+
+Nous pouvons désormais créer un fichier ```.env```
+qui contiendra l'ensemble des variables d'environnement local :
+
+```.env
+APP_NAME=backend
+NODE_ENV=development
+
+PORT=8080
+HOST=0.0.0.0
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=mon_app
+DB_USER=root
+DB_PASSWORD=secret
+DB_DIALECT=mysql
+
+JWT_SECRET=votre_cle_secrete_longue_et_complexe
+
+CORS_ORIGIN=http://localhost:3000
+```
+
+Enfin, nous créons le fichier ```app.js``` essentiel à notre projet.
+On y insérons le code de base suivant :
+
+```nodejs
+
+const express = require('express')
+const app = express()
+
+require('dotenv').config()
+
+app.get('/', (req, res) => {
+
+    res.json({
+        response: "OK v3"
+    })
+
+})
+
+app.listen(process.env.PORT, () => {
+
+    console.log(`Server runnng on : ${process.env.HOST}:${process.env.PORT}`)
+
+})
+```
+
+
+qui contiendra l'ensemble des variables d'environnement local :
 
 ## 2. Le projet "TheStarter"
 
