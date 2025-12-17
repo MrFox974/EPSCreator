@@ -223,7 +223,7 @@ CORS_ORIGIN=http://localhost:3000
 Enfin, nous créons le fichier ```app.js``` essentiel à notre projet.
 On y insérons le code de base suivant :
 
-```nodejs
+```node
 
 const express = require('express')
 const app = express()
