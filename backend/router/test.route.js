@@ -5,8 +5,8 @@ const { authMiddlewares } = require('../middlewares/authMiddlewares')
 const testController = require('../Controllers/test.controller')
 
 
-route.post('/test/getTest', testController.getTest)
-route.post('/test/getTest', authMiddlewares ,testController.getTest)
+route.get('/test/getTest', testController.getTest)
+route.post('/test/postTest', authMiddlewares ,testController.postTest)
 
 
 

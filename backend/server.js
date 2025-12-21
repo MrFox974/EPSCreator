@@ -4,6 +4,6 @@ const app = require('./app');
 const PORT = process.env.PORT || 3000;
 
 
-app.listen(process.env.SERVER_PORT, '0.0.0.0', () => {
-  console.log(process.env.PROTOCOLE + "://" + process.env.CLIENT_IP );
+app.listen(process.env.SERVER_PORT, process.env.SERVER_HOST, () => {
+  console.log(process.env.PROTOCOLE + "://" + process.env.SERVER_HOST );
 });

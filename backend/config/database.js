@@ -1,13 +1,10 @@
 const { Sequelize } = require('sequelize');
+const color = require("../utils/color-message")
 const mysql2 = require('mysql2');
 const fs = require('fs');
 const path = require('path');
 
 require('dotenv').config();
-
-const caPath = path.resolve(__dirname, '..', process.env.DB_CA_PATH);
-
-const ca = fs.readFileSync(caPath, 'utf8');
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -29,13 +26,11 @@ const sequelize = new Sequelize(
 
 const connectToDB = async () => {
 
-  console.log(process.env.DB_CA_PATH)
-
   try {
     await sequelize.authenticate();
     console.log('Connexion établie avec succés.');
   } catch (error) {
-    console.error('Impossible de se connecter à la base de données:', error);
+    console.error(color.yellow + 'Impossible de se connecter à la base de données' + color.reset);
   }
 };
 
@@ -44,7 +39,7 @@ const connectModels = async (force) => {
         await sequelize.sync(force);
         console.log('All models were synchronized successfully.');
     }catch(error){
-        console.error('Impossible de synchroniser les models :', error);
+        console.error(color.yellow + 'Impossible de synchroniser les models' + color.reset);
     }
 }
 

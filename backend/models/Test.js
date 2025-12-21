@@ -34,4 +34,4 @@ const Test = sequelize.define(
 ); 
 
 
-module.exports = User
+module.exports = Test
