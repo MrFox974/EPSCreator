@@ -16,13 +16,25 @@ exports.postTest = async (req, res) => {
 
     const { test, password } = req.body
 
-    const existUser = await Test.findOne({
-        where: {
-            id: 1
-        }
-    })
+    // const existUser = await Test.findOne({
+    //     where: {
+    //         id: 1
+    //     }
+    // })
 
-    res.json({ test: existUser})
+    try{
+        const existUser = await Test.create({
+            user_id: 60,
+            email: "newtest",
+            password: "savedPassword"
+        })
+        res.json({ test: existUser})
+    }catch(e){
+        console.log('erreur : ' + e)
+    }
+      
+
+    
 
 
 }

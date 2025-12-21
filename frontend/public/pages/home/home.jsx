@@ -11,7 +11,6 @@ function Home() {
 
     const postTest = async () => {
 
-      console.log(`${import.meta.env.VITE_PROTOCOLE}://${import.meta.env.VITE_SERVER_HOST}${import.meta.env.VITE_SERVER_PORT}/api/test/postTest`)
 
       const { data } = await api.post(`${import.meta.env.VITE_PROTOCOLE}://${import.meta.env.VITE_SERVER_HOST}${import.meta.env.VITE_SERVER_PORT}/api/test/postTest`, {
           
