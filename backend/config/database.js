@@ -28,7 +28,7 @@ const connectToDB = async () => {
 
   try {
     await sequelize.authenticate();
-    console.log('Connexion établie avec succés.');
+    console.log(color.green + 'Connexion établie avec succés.' + color.reset);
   } catch (error) {
     console.error(color.yellow + 'Impossible de se connecter à la base de données' + color.reset);
   }
@@ -37,7 +37,7 @@ const connectToDB = async () => {
 const connectModels = async (force) => {
     try{
         await sequelize.sync(force);
-        console.log('All models were synchronized successfully.');
+        console.log(color.green + 'All models were synchronized successfully.' + color.reset);
     }catch(error){
         console.error(color.yellow + 'Impossible de synchroniser les models' + color.reset);
     }

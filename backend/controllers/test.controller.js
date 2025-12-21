@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const Test = require('../models/Test')
 const jwt = require('jsonwebtoken');
 const cookie = require("cookie-parser")
 
@@ -17,7 +18,7 @@ exports.postTest = async (req, res) => {
 
     const existUser = await Test.findOne({
         where: {
-            test: test
+            id: 1
         }
     })
 

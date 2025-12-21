@@ -5,13 +5,15 @@ function Home() {
 
     useEffect(() => {
 
-      getTest()
+      postTest()
 
     }, [])
 
-    const getTest = async () => {
+    const postTest = async () => {
 
-      const { data } = await api.post(`${import.meta.env.VITE_PROTOCOLE}://${import.meta.env.VITE_SERVER_HOST}${import.meta.env.VITE_SERVER_PORT}/api/test/getTest`, {
+      console.log(`${import.meta.env.VITE_PROTOCOLE}://${import.meta.env.VITE_SERVER_HOST}${import.meta.env.VITE_SERVER_PORT}/api/test/postTest`)
+
+      const { data } = await api.post(`${import.meta.env.VITE_PROTOCOLE}://${import.meta.env.VITE_SERVER_HOST}${import.meta.env.VITE_SERVER_PORT}/api/test/postTest`, {
           
           test: "user",
           password: "chaine mot de passe"
@@ -35,4 +37,4 @@ function Home() {
   )
 }
 
-export default App
+export default Home

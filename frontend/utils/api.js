@@ -8,7 +8,7 @@ const api = axios.create({
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INTERCEPTOR REQUEST 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<━━━━━━
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accesToken');

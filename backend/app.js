@@ -6,7 +6,7 @@
 
   app.use(cors({
     origin: [
-    	process.env.PROTOCOLE + "://" + process.env.CLIENT_IP 
+    	process.env.PROTOCOLE + "://" + process.env.CLIENT_IP + ":" + process.env.CLIENT_PORT
   	],
     credentials: true,
     methods: ['GET','POST','PUT','DELETE','OPTIONS'],
@@ -16,13 +16,13 @@
   // 
 
   app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ extended: false }));
 
 
   require('dotenv').config()
 
 
-  require('./models/test');
+  require('./models/Test');
 
 
   app.use('/api', require('./Router/test.route'))

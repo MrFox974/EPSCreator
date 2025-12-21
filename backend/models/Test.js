@@ -17,13 +17,7 @@ const Test = sequelize.define(
     },
     password: {
       type: DataTypes.TEXT,
-    },
-    domain_priority: {
-      type: DataTypes.INTEGER,
-    },
-    domain_id: {
-      type: DataTypes.INTEGER,
-    },
+    }
 
   },
   {
