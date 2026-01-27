@@ -1,40 +1,27 @@
-const bcrypt = require('bcryptjs')
 const Test = require('../models/Test')
-const jwt = require('jsonwebtoken');
-const cookie = require("cookie-parser")
+const { Op } = require('sequelize')
 
-
-
-exports.getTest = async (req, res) => {
-
-    res.json({ response: 200})
-
-
-}
-
-exports.postTest = async (req, res) => {
-
-    const { test, password } = req.body
-
-    // const existUser = await Test.findOne({
-    //     where: {
-    //         id: 1
-    //     }
-    // })
-
-    try{
-        const existUser = await Test.create({
-            user_id: 60,
-            email: "newtest",
-            password: "savedPassword"
+exports.getAllTests = async (req, res) => {
+    try {
+        console.log('Début de getAllTests')
+        
+        // Récupérer les enregistrements avec IDs entre 1 et 15
+        const tests = await Test.findAll({
+            where: {
+                id: {
+                    [Op.between]: [1, 10]
+                    
+                }
+            },
+            order: [['id', 'ASC']]
         })
-        res.json({ test: existUser})
-    }catch(e){
-        console.log('erreur : ' + e)
+        
+        console.log(`Nombre d'enregistrements trouvés (IDs 1-15): ${tests.length}`)
+        
+        res.json({ tests })
+    } catch (error) {
+        console.error('Erreur lors de la récupération des tests:', error)
+        res.status(500).json({ error: 'Erreur serveur', details: error.message })
     }
-      
-
-    
-
-
 }
+

@@ -1,35 +1,27 @@
-  const express = require('express')
-  const app = express()
-  const { connectToDB, connectModels } = require('./config/database')
-  const cors = require('cors')
+require('dotenv').config()
 
+const express = require('express')
+const app = express()
+const { connectToDB, connectModels } = require('./config/database')
+const cors = require('cors')
 
-  app.use(cors({
-    origin: [
-    	process.env.PROTOCOLE + "://" + process.env.CLIENT_IP + ":" + process.env.CLIENT_PORT
-  	],
-    credentials: true,
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token']
-  }));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token']
+}));
 
-  // 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false })); 
+// Ne pas toucher à extended: true, ça peut causer des problèmes avec les données de la BDD.
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: false }));
+require('./models/Test');
 
+app.use('/api', require('./router/test.route'))
 
-  require('dotenv').config()
+connectToDB()
 
+connectModels({ force: false })
 
-  require('./models/Test');
-
-
-  app.use('/api', require('./Router/test.route'))
-
-
-  connectToDB()
-
-  connectModels({ force: false })
-  
-  module.exports = app
+module.exports = app

@@ -1,45 +1,39 @@
 const { Sequelize } = require('sequelize');
-const color = require("../utils/color-message")
 const mysql2 = require('mysql2');
 const fs = require('fs');
 const path = require('path');
 
 require('dotenv').config();
 
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DATABASE_NAME,
+  process.env.DATABASE_USER,
+  process.env.DATABASE_PASSWORD,
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
+    host: process.env.DATABASE_HOST,
+    port: process.env.DATABASE_PORT || 3306,
     dialect: 'mysql',
     logging: false,
-    dialectOptions: {
-      ssl: {
-        rejectUnauthorized: false
-      }
-    }
   }
 );
 
 
 const connectToDB = async () => {
-
   try {
     await sequelize.authenticate();
-    console.log(color.green + 'Connexion établie avec succés.' + color.reset);
+    console.log('Connexion établie avec succés.');
   } catch (error) {
-    console.error(color.yellow + 'Impossible de se connecter à la base de données' + color.reset);
+    console.error('Impossible de se connecter à la base de données:', error);
   }
 };
 
 const connectModels = async (force) => {
     try{
         await sequelize.sync(force);
-        console.log(color.green + 'All models were synchronized successfully.' + color.reset);
+        console.log('All models were synchronized successfully.');
     }catch(error){
-        console.error(color.yellow + 'Impossible de synchroniser les models' + color.reset);
+        console.error('Impossible de synchroniser les models :', error);
     }
 }
 

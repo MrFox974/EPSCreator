@@ -1,0 +1,241 @@
+---
+description: Architecture et conventions du projet StarterProject
+alwaysApply: true
+---
+
+# Architecture du Projet StarterProject
+
+## Stack Technique
+
+### Frontend
+- **React** : v19.2.0 (composants fonctionnels uniquement)
+- **React Router** : v7.10.1 (createBrowserRouter, loaders, errorElement)
+- **Vite** : v7.2.4 (build tool)
+- **Tailwind CSS** : v4.1.18 (classes utilitaires inline)
+- **Axios** : v1.13.2 (appels API avec interceptors)
+
+### Backend
+- **Express** : v5.2.1 (framework Node.js)
+- **Sequelize** : v6.37.7 (ORM pour MySQL)
+- **MySQL2** : v3.15.0 (driver MySQL)
+- **JWT** : jsonwebtoken v9.0.2 (authentification)
+- **bcryptjs** : v3.0.3 (hashage de mots de passe)
+- **Serverless** : serverless-http v4.0.0 (déploiement AWS Lambda)
+
+## Structure des Dossiers
+
+```
+backend/
+├── config/          # Configuration (database.js)
+├── controllers/     # Controllers HTTP (logique métier)
+├── models/          # Modèles Sequelize
+├── router/          # Routes Express
+├── services/        # Services métier (logique pure, réutilisable)
+├── middlewares/     # Middlewares Express
+├── app.js           # Configuration Express
+└── server.js        # Point d'entrée (dev local)
+
+frontend/
+├── src/
+│   ├── components/  # Composants réutilisables
+│   │   └── skeletons/  # Skeletons de chargement
+│   ├── pages/       # Pages/Composants de route
+│   ├── hooks/       # Hooks React personnalisés
+│   ├── loaders/     # Loaders React Router
+│   ├── utils/       # Utilitaires (api.js, etc.)
+│   ├── router.jsx   # Configuration des routes
+│   ├── App.jsx      # Composant racine
+│   └── main.jsx     # Point d'entrée
+```
+
+## Conventions de Nommage
+
+### Backend (CommonJS)
+- **Fichiers** : `kebab-case.js` (ex: `test.controller.js`, `payment.route.js`)
+- **Variables/Fonctions** : `camelCase` (ex: `getAllTests`, `createPaymentIntent`)
+- **Classes** : `PascalCase` (ex: `StripeService`)
+- **Constantes** : `UPPER_SNAKE_CASE` (ex: `DATABASE_NAME`)
+- **Modèles Sequelize** : `PascalCase` (ex: `Test`)
+
+### Frontend (ES6 Modules)
+- **Fichiers** : `PascalCase.jsx` pour composants, `camelCase.js` pour utilitaires
+- **Composants** : `PascalCase` (ex: `PaymentButton`, `ErrorBoundary`)
+- **Hooks** : `usePascalCase` (ex: `useStripePayment`)
+- **Variables/Fonctions** : `camelCase` (ex: `homeLoader`, `createPaymentIntent`)
+
+## Patterns Backend
+
+### Controllers
+```javascript
+// ✅ BON - Structure standard
+exports.getAllTests = async (req, res) => {
+    try {
+        // Logique métier
+        const tests = await Test.findAll({...});
+        res.json({ tests });
+    } catch (error) {
+        console.error('Erreur lors de la récupération:', error);
+        res.status(500).json({ error: 'Erreur serveur', details: error.message });
+    }
+};
+```
+
+### Routes
+```javascript
+// ✅ BON - Routes modulaires
+const express = require('express');
+const route = express.Router();
+const controller = require('../controllers/test.controller');
+
+route.get('/test/getAll', controller.getAllTests);
+module.exports = route;
+```
+
+### Services
+```javascript
+// ✅ BON - Service réutilisable avec logique métier pure
+class StripeService {
+  async createPaymentIntent(amount, currency = 'eur', metadata = {}) {
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({...});
+      return { clientSecret, paymentIntentId, amount, currency };
+    } catch (error) {
+      console.error('Erreur:', error);
+      throw new Error(`Erreur Stripe: ${error.message}`);
+    }
+  }
+}
+module.exports = new StripeService();
+```
+
+### Modèles Sequelize
+```javascript
+// ✅ BON - Configuration explicite
+const Test = sequelize.define('test', {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  // ...
+}, {
+  tableName: 'test',
+  freezeTableName: true,
+  timestamps: false,
+});
+```
+
+## Patterns Frontend
+
+### Composants
+```javascript
+// ✅ BON - Composant fonctionnel avec hooks
+function Home() {
+  const { tests = [] } = useLoaderData();
+  
+  return (
+    <div className="p-8">
+      {/* JSX avec Tailwind */}
+    </div>
+  );
+}
+export default Home;
+```
+
+### Loaders React Router
+```javascript
+// ✅ BON - Loader avec gestion d'erreur Response
+export const homeLoader = async () => {
+  try {
+    const { data } = await api.get('/api/test/getAll');
+    return { tests: data.tests || [] };
+  } catch (error) {
+    console.error('Erreur dans homeLoader:', error);
+    throw new Response('Erreur lors du chargement', {
+      status: error.response?.status || 500,
+      statusText: error.response?.statusText || 'Internal Server Error'
+    });
+  }
+};
+```
+
+### Hooks Personnalisés
+```javascript
+// ✅ BON - Hook avec useState, useCallback, gestion d'erreur
+export const useStripePayment = ({ amount, onSuccess, onError } = {}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const handlePayment = useCallback(async (amount, metadata = {}) => {
+    // Logique...
+  }, [amount, onSuccess, onError]);
+  
+  return { handlePayment, loading, error, reset };
+};
+```
+
+### API Utils
+```javascript
+// ✅ BON - Service API centralisé avec interceptors
+import api from './api';
+
+export const createPaymentIntent = async (amount, currency = 'eur', metadata = {}) => {
+  try {
+    const response = await api.post('/payment/create-intent', { amount, currency, metadata });
+    return response.data;
+  } catch (error) {
+    console.error('Erreur:', error);
+    throw error;
+  }
+};
+```
+
+## Gestion d'Erreurs
+
+### Backend
+- Toujours utiliser `try/catch` dans les controllers
+- Logger avec `console.error()` avant de renvoyer l'erreur
+- Retourner `{ error: 'Message', details: error.message }` pour les erreurs serveur
+
+### Frontend
+- Dans les loaders : `throw new Response()` pour les erreurs HTTP
+- Dans les composants : utiliser `ErrorBoundary` (géré par React Router)
+- Dans les hooks : gérer les erreurs avec `setError()` et callbacks `onError`
+
+## Styling (Tailwind CSS)
+
+- Utiliser uniquement des classes Tailwind inline
+- Pas de fichiers CSS séparés (sauf `index.css` pour les styles globaux)
+- Classes utilitaires : `p-8`, `text-2xl`, `bg-blue-600`, `hover:bg-blue-700`
+- Layout flexbox/grid : `flex`, `grid`, `items-center`, `justify-center`
+
+## Variables d'Environnement
+
+### Backend (.env)
+```
+DATABASE_NAME=test
+DATABASE_USER=root
+DATABASE_PASSWORD=hiphop
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+PORT=8080
+CORS_ORIGIN=http://localhost:5173
+JWT_SECRET=...
+STRIPE_SECRET_KEY=...
+```
+
+### Frontend (.env)
+```
+VITE_PROTOCOLE=http
+VITE_SERVER_HOST=localhost
+VITE_SERVER_PORT=8080
+VITE_STRIPE_PUBLISHABLE_KEY=...
+```
+
+## Commentaires et Documentation
+
+- Commentaires détaillés pour les composants complexes (ex: `ErrorBoundary.jsx`)
+- JSDoc pour les fonctions/services importantes
+- Commentaires explicatifs pour les patterns non-évidents
+
+## Déploiement
+
+- Backend : AWS Lambda (via `serverless-http`)
+- Frontend : AWS Amplify
+- Base de données : AWS RDS MySQL

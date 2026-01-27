@@ -1,23 +1,35 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: `${import.meta.env.REACT_APP_PROTOCOLE}://${import.meta.env.REACT_APP_CLIENT_IP}${import.meta.env.REACT_APP_CLIENT_PORT}`,
-  withCredentials: true
+// Construction de l'URL avec valeurs par défaut si les variables d'env ne sont pas définies
+const protocol = import.meta.env.VITE_PROTOCOLE || 'http';
+const host = import.meta.env.VITE_SERVER_HOST || 'localhost';
+const port = import.meta.env.VITE_SERVER_PORT || '8080';
+
+const baseURL = `${protocol}://${host}:${port}`;
+
+console.log('API Base URL:', baseURL);
+console.log('Variables d\'environnement:', {
+  VITE_PROTOCOLE: import.meta.env.VITE_PROTOCOLE,
+  VITE_SERVER_HOST: import.meta.env.VITE_SERVER_HOST,
+  VITE_SERVER_PORT: import.meta.env.VITE_SERVER_PORT
 });
 
+const api = axios.create({
+  baseURL: baseURL,
+  withCredentials: true
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INTERCEPTOR REQUEST 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<━━━━━━
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accesToken');
+  const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
-
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -51,8 +63,9 @@ api.interceptors.response.use(
 
     try {
       // Appelle le serveur pour un nouveau token
+      const refreshURL = `${baseURL}/refresh`;
       const response = await axios.post(
-        'http://localhost:5000/refresh',
+        refreshURL,
         {},
         { withCredentials: true }
       );

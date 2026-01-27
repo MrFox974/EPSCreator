@@ -1,3 +1,36 @@
+# StarterProject (Starter)
+
+## Démarrage rapide (local)
+
+### Frontend
+- **Créer ton env local** : copie `frontend/.env.example` → `frontend/.env.local` puis remplis.
+- **Installer / lancer** :
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+- **Créer ton env local** : copie `backend/.env.example` → `backend/.env` puis remplis.
+- **Installer / lancer** :
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+## Variables d’environnement (règle simple)
+- **Jamais commit** : `backend/.env`, `frontend/.env.local`, `node_modules/`
+- **À committer** : `backend/.env.example`, `frontend/.env.example`
+- **Prod backend (Lambda/Serverless)** : variables dans `serverless.yml` / AWS (runtime `process.env`)
+- **Prod frontend (Amplify)** : variables `VITE_*` dans Amplify (build-time `import.meta.env`)
+
+## Règles Cursor
+Ce projet embarque des règles dans `.cursor/rules/` pour guider l’IA et garder un code cohérent.
+
 # Sommaire :
 
 -	[ Créer un projet de A à Z ](#1-créer-un-projet-de-a-à-z)
@@ -6,12 +39,10 @@
 -	[Installer le frontend (React) sur Amplify]()
 -	[Installer le backend (Nodejs) sur Lambda]()
 -	[Installer la base de données sur RDS MySQL]()
--	[Mémo GitHUB]()
 
 ## 1. Créer un projet de A à Z
-### 1.	Créer le frontend (React JS) ```/frontend```
+### 1.	Créer le backend (Node JS)
 A l'intérieur de ce dernier on va initialiser un nouveau projet vite.
-```
 npm create vite@latest . -- --template react
 ```
 Normalement, il devrait te demander quelques infos et de l'instaler. Tu suis la procédure.
@@ -156,21 +187,7 @@ export default App
 ```
 Nous sommes enfin prêt pour commencer à travailler sérieusement !
 
-### 1.	Créer le backend (Node JS) ```/backend```
-
-## 1. Initialisation du projet
-On ouvre la console et on initialise le projet en faisant :
-```
-npm init
-```
-Il va nous créer le fichier de base ```package.json```.
-Il nous faut ensuite créer les fichiers et repertoires de ```express js```.
-```
-npm install express
-```
-Plusieurs vont alors se créer notamment le repertoire ```/node_modules``` contenant les dépendences et le fichier ```package_lock.js```
-
-## 2. Créer les autres packages de bases côté 
+## 2. Créer les packages de bases
 
 Voici la liste des packages importants à avoir selon moi :
 ```json
@@ -193,60 +210,9 @@ Voici la liste des packages importants à avoir selon moi :
 et le code pour les installer tous d'un coup ! (On ne prend pas en compte ```express``` et ```tailwindcss``` déjà préalablement installés.
 
 ```
-npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql2 sequelize serverless-http
+npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql mysql2 sequelize serverless-http
 npm install --save-dev nodemon
 ```
-## 3. Configuration
-
-Nous pouvons désormais créer un fichier ```.env```
-qui contiendra l'ensemble des variables d'environnement local :
-
-```.env
-APP_NAME=backend
-NODE_ENV=development
-
-PORT=8080
-HOST=0.0.0.0
-
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=mon_app
-DB_USER=root
-DB_PASSWORD=secret
-DB_DIALECT=mysql
-
-JWT_SECRET=votre_cle_secrete_longue_et_complexe
-
-CORS_ORIGIN=http://localhost:3000
-```
-
-Enfin, nous créons le fichier ```app.js``` essentiel à notre projet.
-On y insérons le code de base suivant :
-
-```node
-
-const express = require('express')
-const app = express()
-
-require('dotenv').config()
-
-app.get('/', (req, res) => {
-
-    res.json({
-        response: "OK v3"
-    })
-
-})
-
-app.listen(process.env.PORT, () => {
-
-    console.log(`Server runnng on : ${process.env.HOST}:${process.env.PORT}`)
-
-})
-```
-
-
-qui contiendra l'ensemble des variables d'environnement local :
 
 ## 2. Le projet "TheStarter"
 
@@ -317,69 +283,5 @@ Donc ensuite je crois qu'il faut le relier à un ```VPC``` (réseau privé virtu
 
 
 
-## 6. Mémo GitHUB
 
-Voici un mini “mémo Git” que tu peux coller dans ton README.md (en français, avec les commandes de base les plus utiles).
-
-Initialiser un dépôt
-```
-git init
-```
-Initialise un dépôt Git vide dans le dossier courant.
-
-Lier le dépôt à GitHub
-```
-git remote add origin https://github.com/TON_USER/TON_REPO.git
-git remote -v
-```
-```remote add origin``` : ajoute le dépôt distant (GitHub) sous le nom origin.
-```
-remote -v : affiche les URLs configurées pour origin.​
-```
-Suivre les fichiers et créer un commit
-```
-git status
-git add .
-git commit -m "Message de commit"
-```
-```status``` : montre les fichiers modifiés, ajoutés ou supprimés.
-
-```add .``` : ajoute tous les fichiers suivis/non suivis à l’index (zone de préparation).
-
-```commit -m``` : enregistre un “snapshot” de l’état actuel avec un message.​
-
-Envoyer le code vers GitHub
-```
-git push -u origin main
-```
-Envoie la branche locale main vers la branche distante main.
-
-L’option ```-u``` mémorise le lien : les prochains git push pourront se faire sans arguments.​
-
-Récupérer les changements depuis GitHub
-```
-git pull origin main
-```
-ou pour éviter les commits de merge automatiques :
-```
-git pull origin main --rebase
-```
-```pull``` : récupère les nouveaux commits distants et les fusionne dans ta branche locale.
-
-```--rebase``` : “rejoue” tes commits locaux après ceux du remote pour garder un historique plus linéaire.​
-
-Changer / réinitialiser la remote
-```
-git remote remove origin
-git remote add origin https://github.com/TON_USER/NOUVEAU_REPO.git
-```
-Supprime l’ancienne remote et en ajoute une nouvelle (pratique pour “rebrancher” un projet sur un autre repo).​
-
-Annuler ou revenir en arrière (local)
-```
-git checkout -- chemin/fichier.js    # annule les modifs non indexées sur un fichier
-git reset HEAD chemin/fichier.js     # enlève un fichier de l'index (après git add)
-git reset --hard HEAD                # remet tout l’arbre de travail sur le dernier commit
-```
-À utiliser avec prudence, surtout ```reset --hard``` qui efface les changements non commités.
 
