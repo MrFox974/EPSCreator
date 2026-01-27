@@ -1,4 +1,4 @@
-name: Deploy to AWS Lambda
+name: Deploy backend to AWS Lambda
 
 on:
   push:
@@ -39,3 +39,4 @@ jobs:
 
       - name: Deploy with Serverless
         run: npx serverless deploy
+
