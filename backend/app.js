@@ -8,8 +8,39 @@ const cors = require('cors')
 // Configuration CORS : accepte uniquement l'origine définie dans CORS_ORIGIN
 const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim();
 
+console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
+
+// Middleware CORS personnalisé pour Lambda Function URL
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  console.log('Request Origin:', origin);
+  console.log('Request Method:', req.method);
+  console.log('Request Path:', req.path);
+  
+  // Ajoute toujours les headers CORS si l'origine correspond
+  if (origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  // Gère les requêtes OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    if (origin === allowedOrigin) {
+      return res.sendStatus(200);
+    } else {
+      return res.sendStatus(403);
+    }
+  }
+  
+  next();
+});
+
+// Configuration CORS avec Express CORS middleware
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin);
     // Vérifie si l'origine correspond exactement à celle autorisée
     if (origin === allowedOrigin) {
       callback(null, true);
@@ -21,20 +52,6 @@ app.use(cors({
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token']
 }));
-
-// Gestion explicite des requêtes OPTIONS (preflight) pour Lambda Function URL
-app.options('*', (req, res) => {
-  // Vérifie que l'origine de la requête correspond à celle autorisée
-  if (req.headers.origin === allowedOrigin) {
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(403);
-  }
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); 
