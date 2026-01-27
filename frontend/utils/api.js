@@ -3,13 +3,17 @@ import axios from 'axios';
 // Construction de l'URL avec valeurs par défaut si les variables d'env ne sont pas définies
 const protocol = import.meta.env.VITE_PROTOCOLE || 'http';
 const host = import.meta.env.VITE_SERVER_HOST || 'localhost';
-const port = import.meta.env.VITE_SERVER_PORT || '8080';
+// En prod (Lambda Function URL), VITE_SERVER_PORT n'est pas défini → pas de port dans l'URL
+// En local, VITE_SERVER_PORT=8080 → on ajoute le port
+const port = import.meta.env.VITE_SERVER_PORT;
 
-let baseURL
+let baseURL;
 
 if (!port || port === '' || port === '443' || port === '80') {
+  // Pas de port si non défini ou port par défaut (80/443)
   baseURL = `${protocol}://${host}`;
 } else {
+  // Port défini et différent de 80/443 → on l'ajoute
   baseURL = `${protocol}://${host}:${port}`;
 }
 
