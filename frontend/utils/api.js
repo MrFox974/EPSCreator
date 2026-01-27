@@ -5,6 +5,8 @@ const protocol = import.meta.env.VITE_PROTOCOLE || 'http';
 const host = import.meta.env.VITE_SERVER_HOST || 'localhost';
 const port = import.meta.env.VITE_SERVER_PORT || '8080';
 
+let baseURL
+
 if (!port || port === '' || port === '443' || port === '80') {
   baseURL = `${protocol}://${host}`;
 } else {
