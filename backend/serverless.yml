@@ -13,7 +13,7 @@ provider:
     DATABASE_HOST: database-postgres.ctski2isu26z.eu-south-1.rds.amazonaws.com
     DATABASE_PORT: 5432
     PROTOCOLE: https
-    CORS_ORIGIN: https://main.d2foa299n6ioy9.amplifyapp.com/
+    CORS_ORIGIN: https://main.d2foa299n6ioy9.amplifyapp.com
     CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com
     CLIENT_PORT: 5748
     SERVER_PORT: 8080

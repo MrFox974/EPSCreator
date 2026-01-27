@@ -7,9 +7,12 @@ const { connectToDB, connectModels } = require('./config/database')
 const cors = require('cors')
 
 // Configuration CORS : accepte uniquement l'origine définie dans CORS_ORIGIN
-const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim();
+// Retire le slash final pour matcher l'en-tête Origin envoyé par le navigateur (sans slash)
+const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, '');
 
 console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
+
+const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 
 // Middleware CORS personnalisé pour Lambda Function URL
 app.use((req, res, next) => {
@@ -17,24 +20,23 @@ app.use((req, res, next) => {
   console.log('Request Origin:', origin);
   console.log('Request Method:', req.method);
   console.log('Request Path:', req.path);
-  
-  // Ajoute toujours les headers CORS si l'origine correspond
-  if (origin === allowedOrigin) {
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
+
+  // Pas d'Origin = requête directe (health check, curl, etc.) → autorisée
+  // Sinon, l'origine doit correspondre (sans slash final)
+  if (isOriginAllowed(origin)) {
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  
+
   // Gère les requêtes OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
-    if (origin === allowedOrigin) {
-      return res.sendStatus(200);
-    } else {
-      return res.sendStatus(403);
-    }
+    return isOriginAllowed(origin) ? res.sendStatus(200) : res.sendStatus(403);
   }
-  
+
   next();
 });
 
@@ -42,12 +44,11 @@ app.use((req, res, next) => {
 app.use(cors({
   origin: function (origin, callback) {
     console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin);
-    // Vérifie si l'origine correspond exactement à celle autorisée
-    if (origin === allowedOrigin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Pas d'Origin ou origine autorisée → accepter
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
     }
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
@@ -66,11 +67,12 @@ app.use('/api', require('./router/test.route'))
 app.use((err, req, res, next) => {
   console.error('Express error:', err);
   const origin = req.headers.origin;
-  const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim();
-  
+  const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, '');
+  const ok = !origin || origin === allowed;
+
   // Ajoute les headers CORS même en cas d'erreur
-  if (origin === allowedOrigin) {
-    res.header('Access-Control-Allow-Origin', allowedOrigin);
+  if (ok && origin) {
+    res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
   
