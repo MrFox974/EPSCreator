@@ -1,5 +1,6 @@
 require('dotenv').config()
 
+// Trigger CI/CD: minor non-functional change
 const express = require('express')
 const app = express()
 const { connectToDB, connectModels } = require('./config/database')

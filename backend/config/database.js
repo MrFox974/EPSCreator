@@ -4,7 +4,7 @@ const path = require('path');
 
 require('dotenv').config();
 
-// Supporte à la fois les anciens noms (DB_*) et les nouveaux (DATABASE_*)
+// Supporte à la fois les anciens noms (DB_*) et les nouveaux test (DATABASE_*)
 const DB_NAME = process.env.DATABASE_NAME || process.env.DB_NAME;
 const DB_USER = process.env.DATABASE_USER || process.env.DB_USER;
 const DB_PASSWORD = process.env.DATABASE_PASSWORD || process.env.DB_PASSWORD;
