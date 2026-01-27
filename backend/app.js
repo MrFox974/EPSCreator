@@ -9,7 +9,6 @@ const cors = require('cors')
 // Configuration CORS : accepte plusieurs origines (local + prod)
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(origin => origin.trim());
 
-// Configuration CORS : accepte plusieurs origines (local + prod)
 app.use(cors({
   origin: function (origin, callback) {
     // Permet les requêtes sans origine (ex: Postman, mobile apps)
