@@ -5,17 +5,13 @@ const app = express()
 const { connectToDB, connectModels } = require('./config/database')
 const cors = require('cors')
 
-// Configuration CORS : accepte plusieurs origines (local + prod)
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(origin => origin.trim());
+// Configuration CORS : accepte uniquement l'origine définie dans CORS_ORIGIN
+const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim();
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permet les requêtes sans origine (ex: Postman, mobile apps)
-    if (!origin) {
-      return callback(null, true);
-    }
-    // Vérifie si l'origine est autorisée
-    if (allowedOrigins.includes(origin)) {
+    // Vérifie si l'origine correspond exactement à celle autorisée
+    if (origin === allowedOrigin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -28,11 +24,16 @@ app.use(cors({
 
 // Gestion explicite des requêtes OPTIONS (preflight) pour Lambda Function URL
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || allowedOrigins[0]);
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
+  // Vérifie que l'origine de la requête correspond à celle autorisée
+  if (req.headers.origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(403);
+  }
 });
 
 app.use(express.json());
