@@ -6,15 +6,26 @@ exports.getAllTests = async (req, res) => {
         console.log('Début de getAllTests')
         
         // Récupérer les enregistrements avec IDs entre 1 et 15
-        const tests = await Test.findAll({
-            where: {
-                id: {
-                    [Op.between]: [1, 10]
+        // const tests = await Test.findAll({
+        //     where: {
+        //         id: {
+        //             [Op.between]: [1, 10]
                     
-                }
-            },
-            order: [['id', 'ASC']]
-        })
+        //         }
+        //     },
+        //     order: [['id', 'ASC']]
+        // })
+
+        const tests = {
+            test: "yes",
+            status: "success",
+            data: {
+                id: 1,
+                name: "Test 1",
+                email: "test1@test.com",
+                password: "password1",
+            }
+        }
         
         console.log(`Nombre d'enregistrements trouvés (IDs 1-15): ${tests.length}`)
         
