@@ -14,33 +14,7 @@ console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
 
 const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 
-// Middleware CORS personnalisé pour Lambda Function URL
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log('Request Origin:', origin);
-  console.log('Request Method:', req.method);
-  console.log('Request Path:', req.path);
-
-  // Pas d'Origin = requête directe (health check, curl, etc.) → autorisée
-  // Sinon, l'origine doit correspondre (sans slash final)
-  if (isOriginAllowed(origin)) {
-    if (origin) {
-      res.header('Access-Control-Allow-Origin', origin);
-    }
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-
-  // Gère les requêtes OPTIONS (preflight)
-  if (req.method === 'OPTIONS') {
-    return isOriginAllowed(origin) ? res.sendStatus(200) : res.sendStatus(403);
-  }
-
-  next();
-});
-
-// Configuration CORS avec Express CORS middleware
+// Un seul middleware CORS pour éviter le header Access-Control-Allow-Origin en double
 app.use(cors({
   origin: function (origin, callback) {
     console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin);
