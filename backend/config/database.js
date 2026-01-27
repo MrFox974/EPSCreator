@@ -1,22 +1,22 @@
 const { Sequelize } = require('sequelize');
-const mysql2 = require('mysql2');
 const fs = require('fs');
 const path = require('path');
 
 require('dotenv').config();
 
+// Supporte à la fois les anciens noms (DB_*) et les nouveaux (DATABASE_*)
+const DB_NAME = process.env.DATABASE_NAME || process.env.DB_NAME;
+const DB_USER = process.env.DATABASE_USER || process.env.DB_USER;
+const DB_PASSWORD = process.env.DATABASE_PASSWORD || process.env.DB_PASSWORD;
+const DB_HOST = process.env.DATABASE_HOST || process.env.DB_HOST || 'localhost';
+const DB_PORT = process.env.DATABASE_PORT || process.env.DB_PORT || 5432;
 
-const sequelize = new Sequelize(
-  process.env.DATABASE_NAME,
-  process.env.DATABASE_USER,
-  process.env.DATABASE_PASSWORD,
-  {
-    host: process.env.DATABASE_HOST,
-    port: process.env.DATABASE_PORT || 3306,
-    dialect: 'mysql',
-    logging: false,
-  }
-);
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'postgres',
+  logging: false,
+});
 
 
 const connectToDB = async () => {
