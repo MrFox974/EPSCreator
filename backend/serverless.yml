@@ -3,7 +3,7 @@ service: backend-lambda
 provider:
   name: aws
   runtime: nodejs18.x
-  region: ap-southeast-2
+  region: eu-west-3
   stage: dev
   environment:
     NODE_ENV: production
