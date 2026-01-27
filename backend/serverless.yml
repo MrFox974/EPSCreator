@@ -25,20 +25,4 @@ provider:
 functions:
   api:
     handler: handler.handler
-    url:
-      cors:
-        allowOrigins:
-          - 'https://main.d3k6h4w9mf2bi9.amplifyapp.com'
-        allowHeaders:
-          - Content-Type
-          - Authorization
-          - X-CSRF-Token
-        allowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
-        allowCredentials: true
-        maxAge: 86400
-      authType: NONE
+    url: true
