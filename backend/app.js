@@ -61,8 +61,31 @@ require('./models/Test');
 
 app.use('/api', require('./router/test.route'))
 
-connectToDB()
+// Middleware de gestion d'erreur global
+app.use((err, req, res, next) => {
+  console.error('Express error:', err);
+  const origin = req.headers.origin;
+  const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim();
+  
+  // Ajoute les headers CORS même en cas d'erreur
+  if (origin === allowedOrigin) {
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    details: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+  });
+});
 
-connectModels({ force: false })
+// Initialise la connexion DB (non-bloquant pour Lambda)
+connectToDB().catch(err => {
+  console.error('Failed to connect to database:', err);
+});
+
+connectModels({ force: false }).catch(err => {
+  console.error('Failed to sync models:', err);
+});
 
 module.exports = app
