@@ -11,11 +11,17 @@ const DB_PASSWORD = process.env.DATABASE_PASSWORD || process.env.DB_PASSWORD;
 const DB_HOST = process.env.DATABASE_HOST || process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DATABASE_PORT || process.env.DB_PORT || 5432;
 
+// RDS impose SSL : on l'active quand on n'est pas en localhost
+const useSSL = DB_HOST && !DB_HOST.includes('localhost');
+
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   port: DB_PORT,
   dialect: 'postgres',
   logging: false,
+  dialectOptions: useSSL
+    ? { ssl: { require: true, rejectUnauthorized: false } }
+    : {},
 });
 
 
