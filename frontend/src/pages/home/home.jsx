@@ -28,7 +28,7 @@ function Home() {
                             {tests.map((test) => (
                                 <tr key={test.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-2 border-b">{test.id}</td>
-                                    <td className="px-4 py-2 border-b">{test.user_id || '-'}</td>
+                                    <td className="px-4 py-2 border-b">{test.name || test.user_id || '-'}</td>
                                     <td className="px-4 py-2 border-b">{test.email || '-'}</td>
                                     <td className="px-4 py-2 border-b">{test.password ? '***' : '-'}</td>
                                 </tr>

@@ -6,12 +6,13 @@ export const homeLoader = async () => {
   try {
     
     const { data } = await api.get('/api/test/getAll');
-    
+
     console.log('HomeLoader - Données préchargées:', data);
-    
-    return {
-      tests: data.tests || []
-    };
+
+    const raw = data.tests;
+    const tests = Array.isArray(raw) ? raw : [];
+
+    return { tests };
     
   } catch (error) {
 
