@@ -3,10 +3,20 @@ name: Deploy to AWS Lambda
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'backend/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -21,9 +31,11 @@ jobs:
       - name: Install Serverless CLI
         run: npm install -g serverless@3
 
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::616421593714:role/official_github_deploy
+          aws-region: eu-west-3
+
       - name: Deploy with Serverless
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: npx serverless deploy
