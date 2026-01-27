@@ -25,24 +25,4 @@ provider:
 functions:
   api:
     handler: handler.handler
-    events:
-      - http:
-          path: /{proxy+}
-          method: ANY
-          cors:
-            origin: 'https://main.d3k6h4w9mf2bi9.amplifyapp.com'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-CSRF-Token
-            allowCredentials: true
-      - http:
-          path: /
-          method: ANY
-          cors:
-            origin: 'https://main.d3k6h4w9mf2bi9.amplifyapp.com'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-CSRF-Token
-            allowCredentials: true
+    url: true
