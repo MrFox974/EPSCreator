@@ -5,30 +5,16 @@ exports.getAllTests = async (req, res) => {
     try {
         console.log('Début de getAllTests')
         
-        // Récupérer les enregistrements avec IDs entre 1 et 15
-        // const tests = await Test.findAll({
-        //     where: {
-        //         id: {
-        //             [Op.between]: [1, 10]
+        const tests = await Test.findAll({
+            where: {
+                id: {
+                    [Op.between]: [1, 10]
                     
-        //         }
-        //     },
-        //     order: [['id', 'ASC']]
-        // })
+                }
+            },
+            order: [['id', 'ASC']]
+        })
 
-        const tests = [
-            {
-                id: 1,
-                name: "Test 1",
-                email: "test1@test.com",
-                password: "password1",
-            }
-        ]
-        // TODO: décommenter pour utiliser la BDD
-        // const tests = await Test.findAll({
-        //     where: { id: { [Op.between]: [1, 10] } },
-        //     order: [['id', 'ASC']]
-        // })
 
         console.log(`Nombre d'enregistrements trouvés: ${tests.length}`)
 
