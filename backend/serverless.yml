@@ -14,6 +14,7 @@ provider:
     DB_PORT: 3306
     DB_CA_PATH: certs/isrgrootx1.pem
     PROTOCOLE: https
+    CORS_ORIGIN: https://main.d3k6h4w9mf2bi9.amplifyapp.com
     CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com
     CLIENT_PORT: 5748
     SERVER_PORT: 8080

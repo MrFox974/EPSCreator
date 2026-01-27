@@ -5,7 +5,11 @@ const protocol = import.meta.env.VITE_PROTOCOLE || 'http';
 const host = import.meta.env.VITE_SERVER_HOST || 'localhost';
 const port = import.meta.env.VITE_SERVER_PORT || '8080';
 
-const baseURL = `${protocol}://${host}:${port}`;
+if (!port || port === '' || port === '443' || port === '80') {
+  baseURL = `${protocol}://${host}`;
+} else {
+  baseURL = `${protocol}://${host}:${port}`;
+}
 
 console.log('API Base URL:', baseURL);
 console.log('Variables d\'environnement:', {
