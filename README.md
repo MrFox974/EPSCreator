@@ -1,287 +1,401 @@
-# StarterProject (Starter)
+# StarterProject — Guide complet (V2)
 
-## Démarrage rapide (local)
+Ce document explique comment **créer, configurer et déployer** un site à partir de ce starter, comment **mettre en place les serveurs AWS** (Lambda, Amplify, RDS PostgreSQL), et détaille la **structure du projet**.
 
-### Frontend
-- **Créer ton env local** : copie `frontend/.env.example` → `frontend/.env.local` puis remplis.
-- **Installer / lancer** :
+---
+
+## Sommaire
+
+1. [Créer et déployer un site en partant de ce starter](#1-créer-et-déployer-un-site-en-partant-de-ce-starter)
+2. [Mise en place des serveurs AWS (Lambda, Amplify, RDS)](#2-mise-en-place-des-serveurs-aws-lambda-amplify-rds)
+3. [Structure détaillée du projet](#3-structure-détaillée-du-projet)
+
+---
+
+## 1. Créer et déployer un site en partant de ce starter
+
+### 1.1 Prérequis
+
+- **Node.js** 18+
+- **Git**
+- **Compte AWS** (pour Amplify, Lambda, RDS)
+- **Compte GitHub** (déploiement backend via Actions, frontend lié à Amplify)
+
+### 1.2 Cloner et préparer le projet
 
 ```bash
-cd frontend
-npm install
-npm run dev
+git clone <URL_DE_TON_REPO> mon-projet
+cd mon-projet
 ```
 
-### Backend
-- **Créer ton env local** : copie `backend/.env.example` → `backend/.env` puis remplis.
-- **Installer / lancer** :
+Le projet est **monorepo** : un seul dépôt avec dossiers `frontend/` et `backend/`.
+
+### 1.3 Configuration locale
+
+#### Frontend
+
+1. Copier le fichier d’exemple d’environnement :
+   ```bash
+   cd frontend
+   cp .env.example .env
+   ```
+2. Éditer `frontend/.env` :
+   - `VITE_PROTOCOLE=http`
+   - `VITE_SERVER_HOST=localhost`
+   - `VITE_SERVER_PORT=8080`
+3. Installer et lancer :
+   ```bash
+   npm install
+   npm run dev
+   ```
+   → L’app est disponible sur `http://localhost:5173`.
+
+#### Backend
+
+1. Copier le fichier d’exemple :
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
+2. Remplir `backend/.env` (voir [Variables d’environnement](#variables-denvironnement-récapitulatif)) :
+   - `DATABASE_*` pour Postgres (local ou Docker)
+   - `CORS_ORIGIN=http://localhost:5173`
+   - `JWT_SECRET` et `JWT_REFRESH_SECRET` (chaînes aléatoires)
+3. Lancer le serveur :
+   ```bash
+   npm install
+   npm run dev
+   ```
+   → API sur `http://localhost:8080`.
+
+#### Base de données locale (optionnel)
+
+Pour développer sans RDS :
 
 ```bash
-cd backend
-npm install
-npm run dev
+# À la racine du projet
+docker-compose up -d
 ```
 
-## Variables d’environnement (règle simple)
-- **Jamais commit** : `backend/.env`, `frontend/.env.local`, `node_modules/`
-- **À committer** : `backend/.env.example`, `frontend/.env.example`
-- **Prod backend (Lambda/Serverless)** : variables dans `serverless.yml` / AWS (runtime `process.env`)
-- **Prod frontend (Amplify)** : variables `VITE_*` dans Amplify (build-time `import.meta.env`)
+Postgres écoute sur `localhost:5432` avec `POSTGRES_USER=postgres`, `POSTGRES_DB=starter_db`. Adapter `backend/.env` en conséquence.
 
-## Règles Cursor
-Ce projet embarque des règles dans `.cursor/rules/` pour guider l’IA et garder un code cohérent.
+### 1.4 Déployer en production (vue d’ensemble)
 
-# Sommaire :
+1. **RDS** : créer une instance PostgreSQL, noter host, port, user, password, DB name.
+2. **Lambda** : configurer `backend/serverless.yml` et les secrets GitHub, puis déployer via GitHub Actions (voir partie 2).
+3. **Amplify** : connecter le repo, définir `appRoot: frontend`, renseigner les variables `VITE_*` et l’URL du backend (voir partie 2).
+4. **CORS** : dans le backend (Lambda), `CORS_ORIGIN` doit être **exactement** l’URL de l’app Amplify (sans slash final).
 
--	[ Créer un projet de A à Z ](#1-créer-un-projet-de-a-à-z)
--	[Les packages de base]()
--	[Le projet "TheStarter"]()
--	[Installer le frontend (React) sur Amplify]()
--	[Installer le backend (Nodejs) sur Lambda]()
--	[Installer la base de données sur RDS MySQL]()
+Le détail de chaque service AWS est dans la [partie 2](#2-mise-en-place-des-serveurs-aws-lambda-amplify-rds).
 
-## 1. Créer un projet de A à Z
-### 1.	Créer le backend (Node JS)
-A l'intérieur de ce dernier on va initialiser un nouveau projet vite.
-npm create vite@latest . -- --template react
-```
-Normalement, il devrait te demander quelques infos et de l'instaler. Tu suis la procédure.
-enfin, le démarer.
-Les dossiers et fichier suivant devrait se créer :
-```
-> /node_modules
-> /public
-> /src
-.gitignore
-eslint.config.js
-index.html
-package-lock.json
-package.json
-README.md
-vite.config.js
-```
-Enfin, si ce n'est pas encore fait, tu le demarre avec :
-```
-npm run dev
-```
-Voici le retour qui indique tout à bien fonctionner !
-```
-> frontend@0.0.0 dev
-> vite
-> VITE v7.2.7  ready in 314 ms
-> ➜  Local:   http://localhost:5173/
-> ➜  Network: use --host to expose
-> ➜  press h + enter to show help
-```
-Et voilà frontend créé !
+---
 
-###  3.	Ménage dans le frontend (React JS)
-Il serait intéressent de supprimer ce qui ne nous interesse pas comme :
-```
-README.md
-public/vite.svg
-source/assets
-App.css
-```
-et voilà le projet peut commencer à être bien propre !
+## 2. Mise en place des serveurs AWS (Lambda, Amplify, RDS)
 
-###  4.	Installer TailwindCSS
+Tout doit être dans **la même région AWS** (ex. `eu-west-3` ou `eu-south-1`) pour limiter la latence et les coûts.
 
-TailwindCSS va vous permettre de gérer plus facilement les classes et le responsive.
-Voici comment l'installer :
-```
-npm install tailwindcss @tailwindcss/vite
-```
-Maintenant, dans ```vite.config.js``` tu modifies le contenu de ça... :
+---
 
-```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+### 2.1 RDS PostgreSQL
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
-```
+#### Où configurer
 
-à ça :
-```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+- **Console AWS** : barre de recherche → **RDS** → **Bases de données** → **Créer une base de données**.
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [tailwindcss(), react()],
-})
-```
-Ensuite, dans ```src/index.css``` tu mets :
-```css
-@import "tailwindcss";
-/* global index.css */ 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+#### Paramétrage recommandé
 
-/* add the code bellow */ 
-@layer utilities {
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      .no-scrollbar::-webkit-scrollbar {
-          display: none;
-      }
-     /* Hide scrollbar for IE, Edge and Firefox */
-      .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-    }
-  }
-```
-Pour terminé, tu fais en sorte que ```index.html``` capte le ```index.css``` en rajoutant une ligne dans les meta:
-```html
-<link href="/src/index.css" rel="stylesheet">
-```
-Et on test dans ```App.jsx``` par exemple en faisant :
-```js
-import { useState } from 'react'
+| Paramètre | Valeur type | Où le retrouver / note |
+|-----------|--------------|-------------------------|
+| Moteur | **PostgreSQL** | Choisir la version supportée (ex. 15 ou 16) |
+| Modèle | **Offre gratuite** ou instance selon besoin | Tarification |
+| Identifiant d’instance | `mon-db-postgres` (ex.) | Nom affiché dans la console |
+| Identifiant principal / utilisateur | `postgres` (ou autre) | À réutiliser dans `DATABASE_USER` |
+| Mot de passe | À définir et **sauvegarder** | → `DATABASE_PASSWORD` |
+| Base par défaut | `starter_db` (ou autre) | → `DATABASE_NAME` |
+| Accès public | **Oui** si besoin de connexion hors VPC (ex. Lambda sans VPC) | Configuration supplémentaire |
+| VPC / sous-réseau | Par défaut ou même VPC que Lambda si vous mettez Lambda dans un VPC | Réseau |
+| Groupe de sécurité | Créer ou utiliser un SG autorisant le **port 5432** en entrée depuis les IP/sources nécessaires (ex. Lambda, ou `0.0.0.0/0` pour tests uniquement) | EC2 > Groupes de sécurité |
 
-function App() {
-  const [count, setCount] = useState(0)
+> **Sécurité** : en production, préférer Lambda et RDS dans le même VPC et limiter l’accès 5432 au SG de la Lambda. Pour des tests, l’accès public + SG ouvert peut suffire.
 
-  return (
-    <>
-      <div>
-        <p className='text-red-500'>Hello world</p>
-      </div>
-    </>
-  )
-}
+#### Infos à récupérer après création
 
-export default App
-```
-Et voilà ! Tu as une base solid pour commencer la programmation. Mais on va aller encore plus loins. Et créer un projet fiable, scalable sur AWS.
+Dans la console RDS, en cliquant sur l’instance :
 
-###  5.	La gestion des routes côté frontend est très important pour avoir plusieurs pages et mieux gérer la structure du site.
-Pour cela nous installons ```react-dom-router```
-```
-npm install react-router-dom
-```
-Nous modifions notre App.jsx pour avoir un code propre minimum grâce à react-router-dom et mieux gérer les pages :
-```jsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "../public/pages/Home/Home" //Nous créons dans "public" un nouveau dossier "pages" qui contiens toutes les pages du site
+- **Endpoint** (ex. `mon-db.xxxxx.eu-west-3.rds.amazonaws.com`) → `DATABASE_HOST`
+- **Port** (souvent `5432`) → `DATABASE_PORT`
+- Utilisateur / mot de passe / nom de base déjà définis → `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`
 
-function App() {
+#### SSL
 
-  return (
+Le backend active le SSL pour RDS dès que `DATABASE_HOST` n’est pas `localhost` (voir `backend/config/database.js`). Aucune config supplémentaire côté app en général.
 
-    <Router>
-      <Routes>
-        <Route path="/home" element={<Home/>}/>
-      </Routes>
-    </Router>
+*[À compléter avec vos screens RDS si besoin : capture de la page « Connexion et sécurité », « Endpoint », « Groupe de sécurité ».]*
 
-  )
-}
+---
 
-export default App
-```
-Nous sommes enfin prêt pour commencer à travailler sérieusement !
+### 2.2 Lambda (backend Node.js)
 
-## 2. Créer les packages de bases
+Le backend est déployé avec **Serverless Framework** en **Lambda** exposée via **Lambda Function URL** (pas API Gateway).
 
-Voici la liste des packages importants à avoir selon moi :
-```json
-"dependencies": {
-    "@tailwindcss/vite": "^4.1.13",
-    "axios": "^1.12.2",
-    "bcryptjs": "^3.0.3",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.15.0",
-    "nodemon": "^3.1.10",
-    "sequelize": "^6.37.7",
-    "serverless-http": "^4.0.0",
-    "tailwindcss": "^4.1.13"
-  }
-```
-et le code pour les installer tous d'un coup ! (On ne prend pas en compte ```express``` et ```tailwindcss``` déjà préalablement installés.
+#### Fichiers concernés
 
-```
-npm install axios bcryptjs cookie-parser cors dotenv jsonwebtoken mysql mysql2 sequelize serverless-http
-npm install --save-dev nodemon
+- `backend/serverless.yml` : service, région, variables d’environnement, fonction et `url: true`
+- `backend/handler.js` : point d’entrée Lambda (serverless-http)
+- `.github/workflows/deploy-backend.yml` : déploiement automatique sur push `main` si `backend/**` change
+
+#### Contenu type de `serverless.yml`
+
+```yaml
+service: backend-lambda
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-west-3          # même région que RDS / Amplify
+  stage: dev
+  environment:
+    NODE_ENV: production
+    DATABASE_NAME: <VOTRE_DB_NAME>
+    DATABASE_USER: <VOTRE_DB_USER>
+    DATABASE_PASSWORD: <VOTRE_DB_PASSWORD>
+    DATABASE_HOST: <VOTRE_ENDPOINT_RDS>    # ex. xxx.eu-west-3.rds.amazonaws.com
+    DATABASE_PORT: 5432
+    CORS_ORIGIN: https://main.xxxxx.amplifyapp.com   # URL Amplify SANS slash final
+    JWT_SECRET: <VOTRE_JWT_SECRET>
+    JWT_REFRESH_SECRET: <VOTRE_JWT_REFRESH_SECRET>
+    # Autres variables utiles (STRIPE_SECRET_KEY, etc.)
+
+functions:
+  api:
+    handler: handler.handler
+    url: true
 ```
 
-## 2. Le projet "TheStarter"
+#### Variables à renseigner dans `provider.environment`
 
-Le projet TheStarter est basé sur le dépot/le code minimum nécessaire pour débuter un gros projet qui sera lancé sur AWS lambda, amplify et RDS MySQL
-Tu peux le télécharger, créer 2 reposetory github, un premier ```frontend``` et le second ```backend```.
+| Variable | Description | Où la prendre |
+|----------|-------------|----------------|
+| `DATABASE_NAME` | Nom de la base Postgres | RDS (paramètre « Base de données » ou défaut) |
+| `DATABASE_USER` | Utilisateur Postgres | RDS (identifiant principal) |
+| `DATABASE_PASSWORD` | Mot de passe Postgres | RDS (mot de passe défini à la création) |
+| `DATABASE_HOST` | Endpoint RDS | RDS → onglet « Connexion et sécurité » → Endpoint |
+| `DATABASE_PORT` | Port (souvent 5432) | RDS |
+| `CORS_ORIGIN` | Origine autorisée (frontend) | URL exacte de l’app Amplify, **sans** slash final (ex. `https://main.xxxxx.amplifyapp.com`) |
+| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Secrets pour les tokens | Chaînes aléatoires sécurisées (jamais en dur dans un repo public) |
 
-## 3. Installer le frontend (React) sur Amplify
-###  1.	Création d'un rôle
-Pour commencer un projet sur amplify, il faut d'abord au mieux créer un une personne.
+**Bonnes pratiques** : ne pas committer de mots de passe en clair. Utiliser AWS Secrets Manager ou SSM Parameter Store et les référencer dans `serverless.yml` (ex. `DATABASE_PASSWORD: ${ssm:/mon-app/db-password}`).
 
-1. Vous allez sur votre console/tableau de bord AWS et on tape dans la barre de recherche ```IAM```,
-2. puis on va dans ```> personnes``` puis ```créer un utilisateur```.
-3. On lui créer un ```Nom d'utilisateur```, ```[suivant]```, ```Attacher directement des politiques``` et
-4. on selectionne ``` AdministratorAccess ```.
+#### CORS (backend)
 
-C'est ce qui va nous permettre de faire pas mal de création et modification, on suit les étapes restente et on fait ```créer un utilisateur```.
+- CORS est géré **dans l’app Express** (`backend/app.js`), pas dans la console AWS.
+- `CORS_ORIGIN` doit être **exactement** l’origine du frontend (ex. l’URL Amplify).
+- **Ne pas** activer une « réponse CORS » sur la Lambda Function URL dans la console si Express envoie déjà les en-têtes CORS (risque de doublon `Access-Control-Allow-Origin`).
 
-###  2.	Amplify
-Nous allons désormer dans la barre de rechercher et on tape ```Amplify```.
-1. On clique sur ```Créer une nouvelle application```.
-2. On clique sur ```GitHub```. (On va lier notre dossier frontend de github avec amplify)
-3. On suit les quelques dernières étapes sans soucis et c'est good !
+#### Déploiement via GitHub Actions
 
-Voilà c'est déployé !
-C'est pas le plus compliqué hélas.
+Le workflow `.github/workflows/deploy-backend.yml` :
 
-## 4. Installer le backend (Nodejs) sur Lambda
-C'est maintenant que le rôle IAM/personne créer avec les autorisations va nous servir. Autrement, ça ne fonctionnera pas.
-1. Va dans IAM,
-2. trouve ton rôle/personne et va dans l'onglet ```Informations d'identification de sécurité```
-3. puis ```Créer une clé d'accès```
-4. seletionne ```Interface de ligne de commande (CLI)``` ainsi que ``` Je comprends la recommandation ci-dessus et... ``` puis ```suivant```.
-5. Vous devez noter/garder 3 éléments très importants :
-   1. Access Key ID
-   2. Secret Access Key
-   3. La Région (La région dans laquelle vous souhtaier situer le serveur (ex: eu-west-1). Généralement c'est en haut à droite)
+- se déclenche sur **push sur `main`** quand des fichiers sous `backend/**` changent ;
+- exécute les étapes dans le répertoire `backend/` ;
+- utilise **OIDC** pour s’authentifier à AWS (pas de clés en dur).
 
-6. Tu va dans ton dossier ```backend``` dans github. Tu vas au niveau du code. Tu vas dans ```settings```, ```secrets and variables```, selectionne ```>actions```, puis ```New repository secret``` et la tu note les 3 éléments importants sous la forme suivante :
-   1. ```AWS_ACCESS_KEY_ID```
-   2. ```AWS_SECRET_ACCESS_KEY```
-   3. ```AWS_REGION```
+À configurer côté AWS et GitHub :
 
-et voilà. Le fichier ```.github/workflows/deploy.yml``` est déjà pré-configuré. Il faut simplement connecté ton projet backend à ton github (ce qui est déjà fait normalement, tu entre les éléments important et c'est bon !
+1. **IAM** : créer un rôle avec une trust policy autorisant GitHub OIDC à assumer ce rôle (Fournisseur OIDC : `token.actions.githubusercontent.com`, public pour ton repo/organisation).
+2. Donner à ce rôle les droits nécessaires (déploiement Lambda, création de Function URL, CloudFormation, logs, etc.).
+3. Dans le workflow, `role-to-assume` doit être l’ARN de ce rôle (ex. `arn:aws:iam::616421593714:role/official_github_deploy`).
+4. `aws-region` dans le workflow doit être la même que `provider.region` dans `serverless.yml`.
 
-Ah et dernière chose, tu as certe un fichier ```.env``` dans lequel tu as tes variables d'environnement local. Mais ceux qui seront inhérent à lambda doivent être renseigner dans ```serverless.yml``` (je t'invite à y jetter un oeil afin de comprendre l'organisation des variables d'environnement)
+Après un push sur `main` modifiant `backend/`, le déploiement se lance. À la fin, Serverless affiche l’**URL de la Function** (ex. `https://xxxxx.lambda-url.eu-west-3.on.aws/`). C’est cette URL qui sert de base pour le frontend en prod.
 
+*[À compléter avec vos screens Lambda si besoin : capture « Configuration » > Variables d’environnement, « URL de la fonction ».]*
 
-## 5. Installer la base de données sur RDS MySQL
+---
 
-Là, c'est le plus compliqué !
+### 2.3 Amplify (frontend React)
 
-1. Déjà on note dans la barre de recherche RDS et on selectionne ```Aurora et RDS```.
-2. On va dans ```Bases de données```
-3. ```Création facile``` et on selectionne ```MySQL```.
-4. Important, on selectionne ```Offre gratuite```
-5. Puis on remplie les autres données ```Identifiant d'instance de base de données ```(invente), ```Identifiant principal```. Pour ```Gestion des informations d’identification``` tu met ```Autogéré```, tu créés un ```mot de passe```.
-6. ```Configuration supplémentaire``` > ```Accès publique```
-7. et tu fait ```créer la base de donnée```.
-8. Tu selectionne ta base.
-9. Désormais tu peux normalement t'y connecter à distance ```MySQL Workbench```. Tu as toutes les infos.
-10. Ces infos tu dois une fois de plus les renseigner dans les variables d'environnement de ```serverless.yml```.
+#### Où configurer
 
+- **Console AWS** → **Amplify** → **Créer une application** → **Hosting d’application** → branchement au repo **GitHub** (même repo que le backend, ou repo frontend dédié).
 
+#### Paramétrage du build
 
-Veille à ce qu'ils (amplify, lambda et RDS) soient tous dans la même région stratégique.
+Le build est piloté par **`amplify.yml` à la racine du dépôt** :
 
-Donc ensuite je crois qu'il faut le relier à un ```VPC``` (réseau privé virtuel dans le cloud). Puis le lié à un ```groupe de sécurité``` (EC2). Cela permet de configurer les ```règles entrantes``` afin d'autoriser en type ```MYSQL/Aurora``` et source ```0.0.0.0/0``` afin de pouvoir s'y connecter.
+```yaml
+version: 1
+applications:
+  - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+          env:
+            - VITE_PROTOCOLE: $VITE_PROTOCOLE
+            - VITE_SERVER_HOST: $VITE_SERVER_HOST
+            - VITE_SERVER_PORT: $VITE_SERVER_PORT
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+```
 
+- **`appRoot: frontend`** : Amplify exécute tout (npm, build) dans le dossier `frontend/`.
+- **`artifacts.baseDirectory: dist`** : sortie du build Vite = `frontend/dist`.
+- Les variables **`VITE_*`** sont injectées au **build** via `env`. Leurs **valeurs réelles** se définissent dans la **console Amplify** (App > Paramètres > Variables d’environnement), pas dans le fichier.
 
+#### Variables à renseigner dans la console Amplify
 
+| Variable | Description | Valeur en production |
+|----------|-------------|----------------------|
+| `VITE_PROTOCOLE` | Schéma (http/https) | `https` |
+| `VITE_SERVER_HOST` | Host du backend | **Sans** préfixe `https://`. Pour une Lambda Function URL, utiliser uniquement le host, ex. `xxxxx.lambda-url.eu-west-3.on.aws` |
+| `VITE_SERVER_PORT` | Port du backend | En général **vide** ou `443` pour HTTPS (le frontend n’ajoute pas `:443` dans l’URL). Pour une Function URL, laisser vide ou `443`. |
 
+Le fichier `frontend/utils/api.js` construit `baseURL` à partir de ces variables. Si `VITE_SERVER_PORT` est vide ou 80/443, l’URL est `https://<host>` sans port.
 
+#### Redirect SPA (routes React)
+
+Pour que les routes gérées par React (ex. `/about`) renvoient `index.html` en cas de 404 :
+
+- **Console Amplify** → ton app → **Hosting** → **Rewrites and redirects** → **Manage redirects**
+- Ajouter une règle : source ` /<<*>> `, type **404**, cible ` /index.html ` (ou équivalent selon la doc Amplify du moment).
+
+*[À compléter avec vos screens Amplify si besoin : capture « Build settings » (amplify.yml), « Variables d’environnement », « Rewrites and redirects ».]*
+
+---
+
+### 2.4 Lien Frontend ↔ Backend (CORS et variables)
+
+- **Frontend (Amplify)** appelle le backend via l’URL construite avec `VITE_PROTOCOLE`, `VITE_SERVER_HOST`, `VITE_SERVER_PORT` (voir `frontend/utils/api.js`).
+- **Backend (Lambda)** n’accepte que l’origine définie dans `CORS_ORIGIN`. Elle doit être **exactement** l’URL de l’app Amplify (ex. `https://main.xxxxx.amplifyapp.com`), **sans** slash final.
+- En local : frontend `http://localhost:5173`, backend `CORS_ORIGIN=http://localhost:5173`.
+
+---
+
+### 2.5 Variables d’environnement — récapitulatif
+
+| Contexte | Fichier / lieu | Variables principales |
+|----------|----------------|------------------------|
+| **Backend local** | `backend/.env` (copié depuis `.env.example`) | `DATABASE_*`, `PORT`, `HOST`, `CORS_ORIGIN`, `JWT_SECRET`, `JWT_REFRESH_SECRET` |
+| **Backend prod (Lambda)** | `serverless.yml` → `provider.environment` (ou Secrets Manager / SSM) | Mêmes noms ; valeurs réelles pour RDS, CORS (URL Amplify), JWT, etc. |
+| **Frontend local** | `frontend/.env` (copié depuis `.env.example`) | `VITE_PROTOCOLE`, `VITE_SERVER_HOST`, `VITE_SERVER_PORT` |
+| **Frontend prod** | Console Amplify (Variables d’environnement) + `amplify.yml` → `env` | `VITE_PROTOCOLE`, `VITE_SERVER_HOST`, `VITE_SERVER_PORT` (ou vides selon la logique dans `api.js`) |
+
+---
+
+## 3. Structure détaillée du projet
+
+### 3.1 Arborescence
+
+```
+(racine)
+├── .github/
+│   └── workflows/
+│       └── deploy-backend.yml    # Déploiement Lambda sur push main (backend/**)
+├── .cursor/
+│   └── rules/                    # Règles Cursor (conventions, architecture, déploiement)
+├── amplify.yml                   # Config build Amplify (appRoot: frontend, env VITE_*)
+├── docker-compose.yml            # Postgres local (optionnel)
+├── README.md
+├── README_V2.md                  # Ce guide
+│
+├── backend/
+│   ├── config/
+│   │   └── database.js           # Sequelize + connexion Postgres (SSL si RDS)
+│   ├── controllers/
+│   │   └── test.controller.js    # Logique HTTP (req/res)
+│   ├── middlewares/
+│   │   └── authMiddlewares.js    # (ex.) Auth JWT
+│   ├── models/
+│   │   └── Test.js               # Modèle Sequelize
+│   ├── router/
+│   │   └── test.route.js         # Routes Express → controllers
+│   ├── services/                 # (optionnel) Logique métier réutilisable
+│   ├── app.js                    # Express : CORS, JSON, routes, erreurs, init DB
+│   ├── handler.js                # Point d’entrée Lambda (serverless-http)
+│   ├── server.js                 # Lancement local (npm run dev)
+│   ├── serverless.yml            # Déploiement Lambda + variables d’env
+│   ├── .env.example
+│   └── package.json
+│
+└── frontend/
+    ├── src/
+    │   ├── components/           # Composants réutilisables (Layout, ErrorBoundary, etc.)
+    │   │   └── skeletons/        # Skeletons de chargement
+    │   ├── pages/                # Pages / vues par route (home, about, …)
+    │   ├── loaders/              # Loaders React Router (données pour les routes)
+    │   ├── hooks/                # Hooks personnalisés (optionnel)
+    │   ├── router.jsx            # createBrowserRouter, routes, loaders, errorElement
+    │   ├── App.jsx               # Composant racine
+    │   ├── main.jsx              # Point d’entrée + RouterProvider
+    │   └── index.css             # Styles globaux (Tailwind)
+    ├── utils/
+    │   └── api.js                # Axios (baseURL depuis VITE_*), interceptors (token, refresh)
+    ├── index.html
+    ├── vite.config.js
+    ├── .env.example
+    └── package.json
+```
+
+### 3.2 Rôle des dossiers et fichiers clés
+
+#### Racine
+
+| Élément | Rôle |
+|--------|------|
+| `amplify.yml` | Définit comment Amplify build le frontend (`appRoot`, `env`, `artifacts`) |
+| `docker-compose.yml` | Postgres local pour le dev (port 5432) |
+| `.github/workflows/deploy-backend.yml` | Pipeline de déploiement du backend vers Lambda sur push `main` |
+
+#### Backend
+
+| Dossier / fichier | Rôle |
+|-------------------|------|
+| `config/database.js` | Connexion Sequelize (Postgres), SSL si host ≠ localhost, `connectToDB` / `connectModels` |
+| `controllers/` | Fonctions (req, res) : appels services/models, renvoi JSON ou erreurs |
+| `router/` | Définition des routes Express et enchaînement vers les controllers |
+| `models/` | Modèles Sequelize (tables, champs) |
+| `middlewares/` | Middlewares Express (ex. vérification JWT) |
+| `app.js` | Création de l’app Express : CORS depuis `CORS_ORIGIN`, `express.json()`, montage des routes sous `/api`, middleware d’erreur global, appel non bloquant à `connectToDB` / `connectModels` |
+| `handler.js` | Export de la Lambda : `serverless(app)` → un seul point d’entrée pour la Function URL |
+| `server.js` | Démarrage du serveur en local (`app.listen(PORT)`) |
+| `serverless.yml` | Description du service Lambda, région, variables d’environnement, fonction avec `url: true` |
+
+#### Frontend
+
+| Dossier / fichier | Rôle |
+|-------------------|------|
+| `utils/api.js` | Instance Axios avec `baseURL` dérivée de `VITE_PROTOCOLE`, `VITE_SERVER_HOST`, `VITE_SERVER_PORT` ; interceptors pour token et refresh |
+| `loaders/` | Fonctions de loader React Router : appels API (via `api.js`), retour des données pour chaque route |
+| `router.jsx` | `createBrowserRouter` : association route → composant, → loader, → `errorElement` |
+| `pages/` | Composants de page affichés selon la route |
+| `components/` | Layout, ErrorBoundary, skeletons, etc. |
+| `App.jsx` | Racine UI (peut contenir outlet ou layout commun) |
+| `main.jsx` | Montage de l’app + `RouterProvider` avec le router |
+
+### 3.3 Flux de données typique
+
+1. **Navigation** : React Router affiche une route et déclenche son **loader**.
+2. **Loader** : appelle `api.get(...)` (ou `api.post(...)`), donc `frontend/utils/api.js` → URL construite avec les `VITE_*`.
+3. **Requête HTTP** : vers l’URL de la Lambda (prod) ou `http://localhost:8080` (local). En-tête `Origin` = URL du frontend (Amplify ou localhost).
+4. **Backend** : Express reçoit la requête, CORS vérifie `Origin` grâce à `CORS_ORIGIN`, puis la route (ex. `/api/test/getAll`) est traitée par le **router** → **controller** → **modèle** (Sequelize) → réponses JSON.
+5. **Frontend** : le loader reçoit la réponse, les données sont fournies au composant via `useLoaderData()`, et la page s’affiche.
+
+### 3.4 Conventions de nommage (rappel)
+
+- **Backend** : fichiers en `kebab-case.js` (ex. `test.controller.js`), fonctions en `camelCase`, modèles en `PascalCase`.
+- **Frontend** : composants et fichiers de composants en `PascalCase.jsx`, hooks en `usePascalCase`, utilitaires en `camelCase.js`.
+- **Variables d’env** : `UPPER_SNAKE_CASE` ; préfixe `VITE_` pour celles exposées au frontend (build Vite).
+
+---
+
+*Ce README_V2 peut être enrichi avec des captures d’écran de la console AWS (RDS, Lambda, Amplify) pour illustrer chaque étape (endpoint, variables, redirects, etc.).*

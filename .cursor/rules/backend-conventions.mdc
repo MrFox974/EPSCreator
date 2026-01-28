@@ -181,16 +181,23 @@ try {
 
 ## Configuration Express
 
-### app.js Pattern
+### app.js Pattern (Lambda + dev local)
 ```javascript
 require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const { connectToDB, connectModels } = require('./config/database');
 
-// CORS configuré avec variables d'env
+// CORS : une seule source (middleware cors()), pas de doublon avec un middleware custom
+const allowedOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, '');
+const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token']
@@ -200,18 +207,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // ⚠️ Ne pas mettre true
 
 // Routes
+require('./models/Test');
 app.use('/api', require('./router/test.route'));
 
-// Database
-const { connectToDB, connectModels } = require('./config/database');
-connectToDB();
-connectModels({ force: false });
+// Middleware d'erreur : ajouter headers CORS en cas d'erreur si besoin
+app.use((err, req, res, next) => {
+  const origin = req.headers.origin;
+  const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, '');
+  if ((!origin || origin === allowed) && origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error', details: ... });
+});
+
+// DB : init non-bloquant pour Lambda (pas await au top-level)
+connectToDB().catch(err => console.error('Failed to connect to database:', err));
+connectModels(false).catch(err => console.error('Failed to sync models:', err));
 
 module.exports = app;
 ```
 
 ### Règles
-- Toujours charger `dotenv` en premier
-- CORS configuré avec variables d'environnement
-- `extended: false` pour `urlencoded` (évite problèmes avec BDD)
-- Connecter la DB après la configuration des routes
+- Toujours charger `dotenv` en premier.
+- Un seul middleware CORS (cors()) ; CORS_ORIGIN sans slash final ; accepter requêtes sans Origin si besoin.
+- `extended: false` pour `urlencoded`.
+- Connecter la DB en non-bloquant (`.catch()`) pour ne pas bloquer le cold start Lambda.
+
+## config/database.js (Postgres + RDS SSL)
+
+### Pattern
+- **Dialect** : `postgres`. Variables `DATABASE_*` ou `DB_*`.
+- **SSL pour RDS** : si host ≠ localhost, `dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }`.
+- Ne pas importer `fs`/`path` si non utilisés.

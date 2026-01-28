@@ -64,6 +64,59 @@ export const pageLoader = async () => {
 - Retourner des objets avec valeurs par défaut (`|| []`, `|| {}`)
 - Nommer les loaders : `pageNameLoader` (ex: `homeLoader`)
 
+### Loader avec données différées (UI first)
+Pour afficher la page tout de suite et le skeleton pendant le chargement API, retourner une **promesse** (sans `await`) puis utiliser `<Await>` dans le composant. La logique reste dans le loader.
+
+**Loader** : retourner immédiatement `{ key: promise }` au lieu d’attendre l’API.
+```javascript
+import api from '../../utils/api';
+
+export const pageLoader = () => {
+  const itemsPromise = api
+    .get('/api/endpoint')
+    .then(({ data }) => Array.isArray(data.items) ? data.items : [])
+    .catch((error) => {
+      console.error('Erreur dans pageLoader:', error);
+      throw new Response('Erreur lors du chargement', {
+        status: error.response?.status || 500,
+        statusText: error.response?.statusText || 'Internal Server Error',
+      });
+    });
+  return { items: itemsPromise };
+};
+```
+
+**Composant** : `useLoaderData()` reçoit `{ items }` (promesse). Afficher la structure de la page, puis `<Suspense fallback={<PageSkeleton />}><Await resolve={items} errorElement={...}>{(resolvedItems) => (...)}</Await></Suspense>` pour la zone des données.
+```javascript
+import { useLoaderData, Await } from 'react-router-dom';
+import { Suspense } from 'react';
+import PageSkeleton from '../components/skeletons/PageSkeleton';
+
+function Page() {
+  const { items } = useLoaderData();
+  return (
+    <div className="p-8">
+      <h1>Titre</h1>
+      <Suspense fallback={<PageSkeleton />}>
+        <Await
+          resolve={items}
+          errorElement={<p className="text-red-500">Erreur lors du chargement.</p>}
+        >
+          {(resolvedItems) => (
+            resolvedItems.length === 0
+              ? <p>Aucune donnée</p>
+              : <ul>{resolvedItems.map((x) => <li key={x.id}>...</li>)}</ul>
+          )}
+        </Await>
+      </Suspense>
+    </div>
+  );
+}
+```
+- La page et le titre s’affichent immédiatement.
+- Le skeleton s’affiche pendant le chargement, puis le contenu quand la promesse est résolue.
+- En React Router v7 il n’y a plus `defer()` : on retourne directement un objet contenant la promesse.
+
 ## React Router v7 - Routes
 
 ### Configuration dans router.jsx

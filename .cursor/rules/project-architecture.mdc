@@ -16,36 +16,44 @@ alwaysApply: true
 
 ### Backend
 - **Express** : v5.2.1 (framework Node.js)
-- **Sequelize** : v6.37.7 (ORM pour MySQL)
-- **MySQL2** : v3.15.0 (driver MySQL)
+- **Sequelize** : v6.37.7 (ORM)
+- **PostgreSQL** : pg + pg-hstore (dialect `postgres`), MySQL2 en option selon config
 - **JWT** : jsonwebtoken v9.0.2 (authentification)
 - **bcryptjs** : v3.0.3 (hashage de mots de passe)
-- **Serverless** : serverless-http v4.0.0 (déploiement AWS Lambda)
+- **Serverless** : serverless-http v4.0.0 (déploiement AWS Lambda, Function URL)
 
 ## Structure des Dossiers
 
 ```
-backend/
-├── config/          # Configuration (database.js)
-├── controllers/     # Controllers HTTP (logique métier)
-├── models/          # Modèles Sequelize
-├── router/          # Routes Express
-├── services/        # Services métier (logique pure, réutilisable)
-├── middlewares/     # Middlewares Express
-├── app.js           # Configuration Express
-└── server.js        # Point d'entrée (dev local)
-
+ (racine)
+├── .github/workflows/   # GitHub Actions (deploy-backend.yml à la RACINE, pas dans backend/)
+├── amplify.yml          # Build Amplify (appRoot: frontend), à la racine
+├── docker-compose.yml   # Postgres local (optionnel)
+├── backend/
+│   ├── config/          # Configuration (database.js, Postgres + SSL RDS)
+│   ├── controllers/     # Controllers HTTP (logique métier)
+│   ├── models/          # Modèles Sequelize
+│   ├── router/          # Routes Express
+│   ├── services/        # Services métier (logique pure, réutilisable)
+│   ├── middlewares/     # Middlewares Express
+│   ├── app.js           # Configuration Express (CORS unique, init DB non-bloquant)
+│   ├── handler.js       # Point d'entrée Lambda (serverless-http)
+│   ├── server.js        # Point d'entrée dev local
+│   └── serverless.yml   # Déploiement Lambda (provider.env, functions.api, url: true)
+│
 frontend/
 ├── src/
-│   ├── components/  # Composants réutilisables
-│   │   └── skeletons/  # Skeletons de chargement
-│   ├── pages/       # Pages/Composants de route
-│   ├── hooks/       # Hooks React personnalisés
-│   ├── loaders/     # Loaders React Router
-│   ├── utils/       # Utilitaires (api.js, etc.)
-│   ├── router.jsx   # Configuration des routes
-│   ├── App.jsx      # Composant racine
-│   └── main.jsx     # Point d'entrée
+│   ├── components/      # Composants réutilisables
+│   │   └── skeletons/   # Skeletons de chargement
+│   ├── pages/           # Pages/Composants de route
+│   ├── hooks/           # Hooks React personnalisés
+│   ├── loaders/         # Loaders React Router
+│   ├── utils/           # (api.js est dans frontend/utils/, pas src/utils/)
+│   ├── router.jsx       # Configuration des routes
+│   ├── App.jsx          # Composant racine
+│   └── main.jsx         # Point d'entrée
+├── utils/               # api.js (baseURL VITE_*, interceptors)
+└── index.html, vite.config.js
 ```
 
 ## Conventions de Nommage
@@ -154,6 +162,7 @@ export const homeLoader = async () => {
   }
 };
 ```
+**Données différées (UI first)** : pour afficher la page et le skeleton tout de suite, le loader peut retourner une promesse (sans `await`) ; le composant utilise `<Suspense fallback={<Skeleton />}><Await resolve={...}>{(resolved) => ...}</Await></Suspense>`. Détail dans frontend-conventions (Loader avec données différées).
 
 ### Hooks Personnalisés
 ```javascript
@@ -207,26 +216,33 @@ export const createPaymentIntent = async (amount, currency = 'eur', metadata = {
 
 ## Variables d'Environnement
 
-### Backend (.env)
+### Backend (local : backend/.env, copié depuis backend/.env.example)
 ```
-DATABASE_NAME=test
-DATABASE_USER=root
-DATABASE_PASSWORD=hiphop
+DATABASE_NAME=starter_db
+DATABASE_USER=postgres
+DATABASE_PASSWORD=
 DATABASE_HOST=localhost
-DATABASE_PORT=3306
+DATABASE_PORT=5432
 PORT=8080
+HOST=localhost
 CORS_ORIGIN=http://localhost:5173
-JWT_SECRET=...
-STRIPE_SECRET_KEY=...
+JWT_SECRET=
+JWT_REFRESH_SECRET=
+STRIPE_SECRET_KEY=   # optionnel
 ```
 
-### Frontend (.env)
+### Backend (prod : serverless.yml provider.environment)
+Les mêmes noms (DATABASE_*, CORS_ORIGIN, etc.) sont définis dans `serverless.yml`. Ne pas committer de mots de passe en clair ; préférer SSM/Secrets Manager et référencer dans serverless.
+
+### Frontend (local : frontend/.env, copié depuis frontend/.env.example)
 ```
 VITE_PROTOCOLE=http
 VITE_SERVER_HOST=localhost
 VITE_SERVER_PORT=8080
-VITE_STRIPE_PUBLISHABLE_KEY=...
 ```
+
+### Frontend (prod : Amplify)
+Variables `VITE_PROTOCOLE`, `VITE_SERVER_HOST`, `VITE_SERVER_PORT` dans la console Amplify, passées au build via `amplify.yml` (env: VITE_*: $VITE_*). En prod Lambda Function URL : host = l’URL de la Function URL, pas de port (443).
 
 ## Commentaires et Documentation
 
@@ -236,6 +252,6 @@ VITE_STRIPE_PUBLISHABLE_KEY=...
 
 ## Déploiement
 
-- Backend : AWS Lambda (via `serverless-http`)
-- Frontend : AWS Amplify
-- Base de données : AWS RDS MySQL
+- **Backend** : AWS Lambda (serverless-http), exposé en **Lambda Function URL** (`url: true` dans serverless.yml, pas d’API Gateway). Workflow GitHub Actions à la **racine** : `.github/workflows/deploy-backend.yml`, `defaults.run.working-directory: backend`, déclenché sur push main si `backend/**` change.
+- **Frontend** : AWS Amplify ; `amplify.yml` à la racine, `appRoot: frontend`, artifacts `dist`. Redirect SPA (404 → index.html) à configurer dans la console Amplify (Hosting > Rewrites and redirects).
+- **Base de données** : AWS RDS PostgreSQL. Connexion depuis Lambda avec SSL si host ≠ localhost (config/database.js).
