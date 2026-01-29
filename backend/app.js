@@ -34,8 +34,14 @@ app.use(express.urlencoded({ extended: false }));
 // Ne pas toucher à extended: true, ça peut causer des problèmes avec les données de la BDD.
 
 require('./models/Test');
+require('./models/index'); // Charge tous les modèles avec leurs associations
 
-app.use('/api', require('./router/test.route'))
+app.use('/api', require('./router/test.route'));
+app.use('/api', require('./router/fiche-eps.route'));
+app.use('/api', require('./router/ecole.route'));
+app.use('/api', require('./router/classe.route'));
+app.use('/api', require('./router/activite-support.route'));
+app.use('/api', require('./router/sequence.route'));
 
 // Middleware de gestion d'erreur global
 app.use((err, req, res, next) => {
@@ -61,7 +67,7 @@ connectToDB().catch(err => {
   console.error('Failed to connect to database:', err);
 });
 
-connectModels({ force: false }).catch(err => {
+connectModels({ alter: true }).catch(err => {
   console.error('Failed to sync models:', err);
 });
 

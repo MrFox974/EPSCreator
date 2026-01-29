@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: starter_db
+      POSTGRES_DB: starter_db_new
     ports:
       - "5432:5432"
     volumes:

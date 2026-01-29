@@ -2,34 +2,61 @@ import { createBrowserRouter, createRoutesFromElements, Route } from 'react-rout
 import { lazy, Suspense } from 'react';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
-import HomeSkeleton from './components/skeletons/HomeSkeleton';
-import AboutSkeleton from './components/skeletons/AboutSkeleton';
-import { homeLoader } from './loaders/home';
-import { aboutLoader } from './loaders/about';
+import EpsLeconSkeleton from './components/skeletons/EpsLeconSkeleton';
 
-const Home = lazy(() => import('./pages/home/home'));
-const About = lazy(() => import('./pages/about/about'));
+const Dashboard = lazy(() => import('./pages/dashboard/dashboard'));
+const Activite = lazy(() => import('./pages/activite/activite'));
+const EpsLecon = lazy(() => import('./pages/eps-lecon/eps-lecon'));
+const Sequence = lazy(() => import('./pages/sequence/sequence'));
+
+// Skeleton simple pour le dashboard
+const DashboardSkeleton = () => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#1e3a5f] border-t-transparent"></div>
+  </div>
+);
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<ErrorBoundary />}>
+      {/* Dashboard - Page d'accueil */}
       <Route
-        path="home"
+        index
         element={
-          <Suspense fallback={<HomeSkeleton />}>
-            <Home />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Dashboard />
           </Suspense>
         }
-        loader={homeLoader}
       />
+      
+      {/* Page Activité Support */}
       <Route
-        path="about"
+        path="activite/:id"
         element={
-          <Suspense fallback={<AboutSkeleton />}>
-            <About />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Activite />
           </Suspense>
         }
-        loader={aboutLoader}
+      />
+      
+      {/* Leçon EPS avec ID dynamique */}
+      <Route
+        path="lecon/:id"
+        element={
+          <Suspense fallback={<EpsLeconSkeleton />}>
+            <EpsLecon />
+          </Suspense>
+        }
+      />
+      
+      {/* Séquence EPS avec ID dynamique */}
+      <Route
+        path="sequence/:id"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Sequence />
+          </Suspense>
+        }
       />
     </Route>
   )
