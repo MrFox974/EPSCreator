@@ -61,7 +61,10 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: 'Séquence non trouvée' });
     }
     
-    await sequence.update(req.body);
+    // Filtrer les champs non-modifiables
+    const { id: _, activite_support_id, created_at, updated_at, ...updateData } = req.body;
+    
+    await sequence.update(updateData);
     res.json({ sequence, message: 'Séquence mise à jour avec succès' });
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la séquence:', error);

@@ -68,9 +68,18 @@ function Dashboard() {
     loadData();
   }, [loadData]);
 
-  // Toggle expand
+  // Toggle expand - ferme les autres écoles quand on en ouvre une
   const toggleEcole = (id) => {
-    setExpandedEcoles(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedEcoles(prev => {
+      const isCurrentlyExpanded = prev[id];
+      if (isCurrentlyExpanded) {
+        // Si on ferme, juste toggle
+        return { ...prev, [id]: false };
+      } else {
+        // Si on ouvre, fermer toutes les autres
+        return { [id]: true };
+      }
+    });
   };
 
   const toggleClasse = (id) => {
@@ -184,12 +193,13 @@ function Dashboard() {
             </div>
             <button
               onClick={() => openEcoleModal('create')}
-              className="bg-white text-[#1e3a5f] px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="bg-white text-[#1e3a5f] px-3 py-2 md:px-6 md:py-3 rounded-xl text-sm md:text-base font-semibold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl flex items-center gap-1 md:gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Nouvelle école
+              <span className="hidden sm:inline">Nouvelle école</span>
+              <span className="sm:hidden">École</span>
             </button>
           </div>
         </div>

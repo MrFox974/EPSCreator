@@ -74,7 +74,13 @@ function EditableField({
   const handleClose = useCallback(() => {
     setIsEditing(false);
     if (localValue !== (value || '')) {
-      onChange(fieldName, localValue);
+      // Si fieldName est fourni, on appelle onChange(fieldName, value)
+      // Sinon on appelle onChange(value) directement
+      if (fieldName !== undefined) {
+        onChange(fieldName, localValue);
+      } else {
+        onChange(localValue);
+      }
     }
   }, [localValue, value, fieldName, onChange]);
 

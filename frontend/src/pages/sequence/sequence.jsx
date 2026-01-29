@@ -38,7 +38,9 @@ function Sequence() {
   const [sequence, setSequence] = useState(defaultSequenceData);
   const [activite, setActivite] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState({ show: false, type: 'success', message: '' });
+  // Status: 'idle' | 'saving' | 'saved' | 'error'
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Refs pour éviter les closures stales
   const sequenceRef = useRef(sequence);
@@ -83,12 +85,14 @@ function Sequence() {
     const currentId = sequenceIdRef.current;
     if (!currentId) return;
     
+    setSaveStatus('saving');
     try {
       await updateSequence(currentId, dataToSave);
-      setSaveStatus({ show: true, type: 'success', message: 'Enregistré' });
+      setSaveStatus('saved');
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      setSaveStatus({ show: true, type: 'error', message: 'Erreur de connexion' });
+      setErrorMessage('Erreur de connexion');
+      setSaveStatus('error');
     }
   }, []);
 
@@ -144,7 +148,8 @@ function Sequence() {
   const SimpleEditable = ({ fieldName, placeholder = 'Cliquez pour éditer...' }) => (
     <EditableField
       value={sequence[fieldName] || ''}
-      onChange={(val) => handleFieldChange(fieldName, val)}
+      onChange={handleFieldChange}
+      fieldName={fieldName}
       placeholder={placeholder}
     />
   );
@@ -153,7 +158,8 @@ function Sequence() {
   const MultilineEditable = ({ fieldName, placeholder = 'Cliquez pour éditer...' }) => (
     <EditableField
       value={sequence[fieldName] || ''}
-      onChange={(val) => handleFieldChange(fieldName, val)}
+      onChange={handleFieldChange}
+      fieldName={fieldName}
       placeholder={placeholder}
       multiline
     />
@@ -171,7 +177,7 @@ function Sequence() {
   const attendusCycle = parseJSON(sequence.attendus_fin_cycle);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen overflow-x-hidden">
       {/* Barre de navigation */}
       <div className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-3">
@@ -187,7 +193,7 @@ function Sequence() {
         </div>
       </div>
       
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto overflow-hidden break-words">
         
         {/* En-tête */}
         <header className="py-6 px-6 bg-white">
@@ -465,11 +471,9 @@ function Sequence() {
       </div>
 
       {/* Popup de sauvegarde */}
-      <SavePopup
-        show={saveStatus.show}
-        type={saveStatus.type}
-        message={saveStatus.message}
-        onHide={() => setSaveStatus({ ...saveStatus, show: false })}
+      <SavePopup 
+        status={saveStatus}
+        errorMessage={errorMessage}
       />
     </div>
   );

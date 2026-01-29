@@ -278,7 +278,7 @@ function EpsLecon() {
   const situationsFinale = getSituations('finale');
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen overflow-x-hidden">
       {/* Barre de navigation */}
       <div className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-3">
@@ -301,7 +301,7 @@ function EpsLecon() {
         </div>
       </div>
       
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto overflow-hidden break-words">
         
         {/* En-tête - Préparation leçon EPS */}
         <header className="py-6 px-6 bg-white">
