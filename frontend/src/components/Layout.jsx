@@ -58,7 +58,7 @@ function Layout() {
                     to="/outils/vma"
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#1e3a5f] rounded-lg mx-1"
                   >
-                    Validation
+                    Test VMA
                   </Link>
                 </div>
               )}

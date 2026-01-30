@@ -21,15 +21,15 @@ const initSynth = async () => {
   return synth;
 };
 
-// Beep functions using Tone.js
+// Beep functions
 const beepPlot = async () => {
   const s = await initSynth();
-  s.triggerAttackRelease('C5', '0.25'); // Normal plot beep
+  s.triggerAttackRelease('C5', '0.25');
 };
 
 const beepLastPlot = async () => {
   const s = await initSynth();
-  s.triggerAttackRelease('E6', '0.4'); // Higher pitch (E6 vs C5), longer duration
+  s.triggerAttackRelease('E6', '0.4');
 };
 
 const beepCountdown = async () => {
@@ -47,17 +47,105 @@ const beepTest = async () => {
   s.triggerAttackRelease('A4', '0.3');
 };
 
-const speak = (text, lang = 'fr-FR') => {
+// ============ iOS SPEECH FIX ============
+let voicesLoaded = false;
+let availableVoices = [];
+
+// Load voices - needed for iOS
+const loadVoices = () => {
   return new Promise((resolve) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = 1;
-    utterance.volume = 1;
-    utterance.onend = resolve;
-    utterance.onerror = resolve;
-    speechSynthesis.speak(utterance);
+    availableVoices = speechSynthesis.getVoices();
+    if (availableVoices.length > 0) {
+      voicesLoaded = true;
+      resolve(availableVoices);
+    } else {
+      speechSynthesis.onvoiceschanged = () => {
+        availableVoices = speechSynthesis.getVoices();
+        voicesLoaded = true;
+        resolve(availableVoices);
+      };
+      // Fallback timeout for iOS
+      setTimeout(() => {
+        availableVoices = speechSynthesis.getVoices();
+        voicesLoaded = true;
+        resolve(availableVoices);
+      }, 1000);
+    }
   });
 };
+
+// Get French voice (preferably male)
+const getFrenchVoice = () => {
+  if (availableVoices.length === 0) {
+    availableVoices = speechSynthesis.getVoices();
+  }
+
+  // Try French male voice
+  const frenchMale = availableVoices.find(v =>
+    v.lang.startsWith('fr') && (
+      v.name.toLowerCase().includes('thomas') ||
+      v.name.toLowerCase().includes('daniel') ||
+      v.name.toLowerCase().includes('male')
+    )
+  );
+  if (frenchMale) return frenchMale;
+
+  // Any French voice not female
+  const frenchNotFemale = availableVoices.find(v =>
+    v.lang.startsWith('fr') &&
+    !v.name.toLowerCase().includes('female') &&
+    !v.name.toLowerCase().includes('amelie') &&
+    !v.name.toLowerCase().includes('marie') &&
+    !v.name.toLowerCase().includes('audrey')
+  );
+  if (frenchNotFemale) return frenchNotFemale;
+
+  // Any French voice
+  return availableVoices.find(v => v.lang.startsWith('fr')) || null;
+};
+
+// iOS-compatible speak function
+const speak = (text) => {
+  return new Promise((resolve) => {
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+
+    // Small delay for iOS
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'fr-FR';
+      utterance.rate = 1;
+      utterance.pitch = 0.85;
+      utterance.volume = 1;
+
+      const voice = getFrenchVoice();
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      utterance.onend = () => resolve();
+      utterance.onerror = (e) => {
+        console.log('Speech error:', e);
+        resolve();
+      };
+
+      // iOS fix: need to call speak synchronously after user interaction
+      speechSynthesis.speak(utterance);
+
+      // Fallback timeout in case onend doesn't fire
+      setTimeout(resolve, 3000);
+    }, 100);
+  });
+};
+
+// Wake up speech synthesis (call on user interaction)
+const wakeSpeech = () => {
+  const utterance = new SpeechSynthesisUtterance('');
+  utterance.volume = 0;
+  speechSynthesis.speak(utterance);
+};
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const calculateTimePerPlot = (vma, distance) => {
   return (distance * 3.6) / vma;
@@ -79,6 +167,7 @@ export default function VMATimer() {
   const [displayTime, setDisplayTime] = useState('00.0');
   const [announcementMade, setAnnouncementMade] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('');
 
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -86,23 +175,57 @@ export default function VMATimer() {
   const lastSecondRef = useRef(null);
   const beepedSecondsRef = useRef(new Set());
 
+  // Load voices on mount
+  useEffect(() => {
+    loadVoices().then((voices) => {
+      console.log('Voices loaded:', voices.length);
+      const frVoice = getFrenchVoice();
+      if (frVoice) {
+        setVoiceStatus(`Voix: ${frVoice.name}`);
+      }
+    });
+  }, []);
+
   const initAudio = async () => {
     try {
+      // Wake up speech synthesis first (iOS requirement)
+      wakeSpeech();
+
+      // Load voices
+      await loadVoices();
+
+      // Init Tone.js
       await Tone.start();
       await initSynth();
       await beepTest();
+
+      // Small delay then test voice
+      await delay(300);
+      await speak('Audio activé');
+
       setAudioReady(true);
+
+      const frVoice = getFrenchVoice();
+      if (frVoice) {
+        setVoiceStatus(`✓ ${frVoice.name}`);
+      } else {
+        setVoiceStatus('⚠️ Voix FR non trouvée');
+      }
+
       console.log('Audio initialized!');
     } catch (e) {
       console.error('Audio init error:', e);
+      setVoiceStatus('Erreur audio');
     }
   };
 
   const addVMA = () => {
+    wakeSpeech(); // Keep speech alive on iOS
     setWorkoutList([...workoutList, { type: 'vma', value: newVMA }]);
   };
 
   const addPause = () => {
+    wakeSpeech();
     setWorkoutList([...workoutList, { type: 'pause' }]);
   };
 
@@ -150,7 +273,8 @@ export default function VMATimer() {
   const startWorkout = async () => {
     if (workoutList.length === 0) return;
 
-    // Ensure audio is ready
+    // Wake speech and init audio
+    wakeSpeech();
     await Tone.start();
     await initSynth();
 
@@ -165,6 +289,7 @@ export default function VMATimer() {
     startTimeRef.current = null;
     lastSecondRef.current = null;
 
+    await delay(100);
     speak('Préparation. 30 secondes.');
   };
 
@@ -211,14 +336,12 @@ export default function VMATimer() {
         lastSecondRef.current = Math.ceil(timePerPlot);
       }
     } else if (currentPhase === 'running') {
-      // Check if this is the LAST plot
       const isLastPlot = currentPlot >= plots - 1;
 
-      // BEEP for completed plot - different sound for last plot
       if (isLastPlot) {
-        await beepLastPlot(); // Higher pitch, longer
+        await beepLastPlot();
       } else {
-        await beepPlot(); // Normal beep
+        await beepPlot();
       }
 
       if (currentPlot < plots - 1) {
@@ -233,6 +356,7 @@ export default function VMATimer() {
         if (currentIndex < workoutList.length - 1) {
           const nextItem = workoutList[currentIndex + 1];
           if (nextItem.type === 'pause') {
+            await delay(2000);
             speak(`Pause. ${restTime} secondes`);
             setCurrentPhase('rest');
             setCurrentIndex(currentIndex + 1);
@@ -242,6 +366,7 @@ export default function VMATimer() {
             startTimeRef.current = performance.now();
             lastSecondRef.current = Math.ceil(restTime);
           } else {
+            await delay(2000);
             setCurrentIndex(currentIndex + 1);
             setCurrentPhase('running');
             setCurrentPlot(0);
@@ -253,6 +378,7 @@ export default function VMATimer() {
             lastSecondRef.current = Math.ceil(timePerPlot);
           }
         } else {
+          await delay(2000);
           speak('Entraînement terminé. Bravo!');
           setCurrentPhase('finished');
           setIsRunning(false);
@@ -302,7 +428,6 @@ export default function VMATimer() {
       setDisplayTime(formatTime(remaining));
 
       if (currentPhase === 'countdown' || currentPhase === 'rest') {
-        // Announcement earlier: at 10 seconds (before the 5s countdown beeps)
         if (currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
           setAnnouncementMade(true);
           makeAnnouncement(currentPhase, currentIndex);
@@ -369,7 +494,7 @@ export default function VMATimer() {
           VMA Timer
         </h1>
 
-        {/* Audio Test Button - IMPORTANT */}
+        {/* Audio Test Button */}
         <div className="mb-6">
           <button
             onClick={initAudio}
@@ -380,11 +505,14 @@ export default function VMATimer() {
             }`}
           >
             <span className="text-3xl">🔊</span>
-            {audioReady ? '✅ SON ACTIVÉ - Cliquer pour retester' : '⚠️ APPUYER ICI POUR ACTIVER LE SON ⚠️'}
+            {audioReady ? '✅ SON ACTIVÉ - Retester' : '⚠️ APPUYER POUR ACTIVER LE SON ⚠️'}
           </button>
+          {voiceStatus && (
+            <p className="text-center text-slate-400 mt-2 text-sm">{voiceStatus}</p>
+          )}
           {!audioReady && (
             <p className="text-center text-red-400 mt-2 text-sm">
-              Tu dois cliquer sur ce bouton et entendre un bip avant de commencer !
+              Tu dois entendre &quot;Audio activé&quot; avant de commencer !
             </p>
           )}
         </div>
