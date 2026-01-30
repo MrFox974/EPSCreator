@@ -147,6 +147,7 @@ const wakeSpeech = () => {
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Temps en secondes par plot : (distance en m × 3.6) / VMA → ex. VMA 7, 20 m = 10.3 s ; VMA 14, 20 m = 5.1 s ; VMA 16, 20 m = 4.5 s
 const calculateTimePerPlot = (vma, distance) => {
   return (distance * 3.6) / vma;
 };
@@ -177,6 +178,7 @@ export default function VMATimer() {
   const lastSecondRef = useRef(null);
   const beepedSecondsRef = useRef(new Set());
   const restTensAnnouncedRef = useRef(new Set());
+  const phaseCompleteTriggeredRef = useRef(false);
 
   // Load voices on mount
   useEffect(() => {
@@ -265,6 +267,7 @@ export default function VMATimer() {
     setAnnouncementMade(false);
     beepedSecondsRef.current = new Set();
     restTensAnnouncedRef.current = new Set();
+    phaseCompleteTriggeredRef.current = false;
     if (timerRef.current) {
       cancelAnimationFrame(timerRef.current);
     }
@@ -318,6 +321,7 @@ export default function VMATimer() {
   }, [getNextVMAItem]);
 
   const handlePhaseComplete = useCallback(async () => {
+    phaseCompleteTriggeredRef.current = true;
     startTimeRef.current = null;
     lastSecondRef.current = null;
     beepedSecondsRef.current = new Set();
@@ -441,6 +445,7 @@ export default function VMATimer() {
         }
       }
     }
+    phaseCompleteTriggeredRef.current = false;
   }, [currentPhase, currentIndex, currentPlot, plots, workoutList, distance, restTime, preparationTime, loopEnabled]);
 
   useEffect(() => {
@@ -481,6 +486,8 @@ export default function VMATimer() {
       lastSecondRef.current = currentSecond;
 
       if (remaining <= 0) {
+        if (phaseCompleteTriggeredRef.current) return;
+        phaseCompleteTriggeredRef.current = true;
         startTimeRef.current = null;
         if (currentPhase === 'countdown' || currentPhase === 'rest') {
           beepGo();
