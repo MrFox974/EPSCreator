@@ -16,7 +16,7 @@ const initSynth = async () => {
         release: 0.1
       }
     }).toDestination();
-    Tone.Destination.volume.value = 0; // 0 dB = full volume
+    Tone.Destination.volume.value = 0;
   }
   return synth;
 };
@@ -24,7 +24,12 @@ const initSynth = async () => {
 // Beep functions using Tone.js
 const beepPlot = async () => {
   const s = await initSynth();
-  s.triggerAttackRelease('C5', '0.25');
+  s.triggerAttackRelease('C5', '0.25'); // Normal plot beep
+};
+
+const beepLastPlot = async () => {
+  const s = await initSynth();
+  s.triggerAttackRelease('E6', '0.4'); // Higher pitch (E6 vs C5), longer duration
 };
 
 const beepCountdown = async () => {
@@ -206,8 +211,15 @@ export default function VMATimer() {
         lastSecondRef.current = Math.ceil(timePerPlot);
       }
     } else if (currentPhase === 'running') {
-      // BEEP for completed plot
-      await beepPlot();
+      // Check if this is the LAST plot
+      const isLastPlot = currentPlot >= plots - 1;
+
+      // BEEP for completed plot - different sound for last plot
+      if (isLastPlot) {
+        await beepLastPlot(); // Higher pitch, longer
+      } else {
+        await beepPlot(); // Normal beep
+      }
 
       if (currentPlot < plots - 1) {
         setCurrentPlot(prev => prev + 1);
@@ -290,7 +302,8 @@ export default function VMATimer() {
       setDisplayTime(formatTime(remaining));
 
       if (currentPhase === 'countdown' || currentPhase === 'rest') {
-        if (currentSecond <= 7 && currentSecond > 5 && !announcementMade) {
+        // Announcement earlier: at 10 seconds (before the 5s countdown beeps)
+        if (currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
           setAnnouncementMade(true);
           makeAnnouncement(currentPhase, currentIndex);
         }

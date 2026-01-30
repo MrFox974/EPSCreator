@@ -32,7 +32,14 @@ function Layout() {
             >
               Dashboard EPS
             </Link>
-            <div className="relative" ref={dropdownRef}>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/"
+                className="px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-[#1e3a5f] transition-colors font-medium"
+              >
+                Mes établissements
+              </Link>
+              <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setOutilsOpen((prev) => !prev)}
@@ -55,6 +62,7 @@ function Layout() {
                   </Link>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>
