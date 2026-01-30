@@ -28,7 +28,8 @@
     "react-router-dom": "^7.10.1",
     "sequelize": "^6.37.7",
     "serverless-http": "^4.0.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

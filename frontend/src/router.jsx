@@ -8,6 +8,7 @@ const Dashboard = lazy(() => import('./pages/dashboard/dashboard'));
 const Activite = lazy(() => import('./pages/activite/activite'));
 const EpsLecon = lazy(() => import('./pages/eps-lecon/eps-lecon'));
 const Sequence = lazy(() => import('./pages/sequence/sequence'));
+const VMATimer = lazy(() => import('./pages/outils/VMATimer'));
 
 // Skeleton simple pour le dashboard
 const DashboardSkeleton = () => (
@@ -55,6 +56,16 @@ export const router = createBrowserRouter(
         element={
           <Suspense fallback={<DashboardSkeleton />}>
             <Sequence />
+          </Suspense>
+        }
+      />
+
+      {/* Outil Validation VMA */}
+      <Route
+        path="outils/vma"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <VMATimer />
           </Suspense>
         }
       />
