@@ -176,6 +176,7 @@ export default function VMATimer() {
   const targetTimeRef = useRef(null);
   const lastSecondRef = useRef(null);
   const beepedSecondsRef = useRef(new Set());
+  const restTensAnnouncedRef = useRef(new Set());
 
   // Load voices on mount
   useEffect(() => {
@@ -263,6 +264,7 @@ export default function VMATimer() {
     setDisplayTime('00.0');
     setAnnouncementMade(false);
     beepedSecondsRef.current = new Set();
+    restTensAnnouncedRef.current = new Set();
     if (timerRef.current) {
       cancelAnimationFrame(timerRef.current);
     }
@@ -359,11 +361,17 @@ export default function VMATimer() {
           const nextItem = workoutList[currentIndex + 1];
           if (nextItem.type === 'pause') {
             await delay(2000);
-            speak(`Pause. ${restTime} secondes`);
+            restTensAnnouncedRef.current = new Set();
+            const nextVMAForPause = getNextVMAItem(currentIndex + 2);
+            if (nextVMAForPause) {
+              speak(`Pause. ${restTime} secondes. Prochaine course VMA ${nextVMAForPause.value}`);
+            } else {
+              speak(`Pause. ${restTime} secondes. Fin de l'entraînement`);
+            }
             setCurrentPhase('rest');
             setCurrentIndex(currentIndex + 1);
             setTimeLeft(restTime);
-            setAnnouncementMade(false);
+            setAnnouncementMade(true);
             targetTimeRef.current = restTime;
             startTimeRef.current = performance.now();
             lastSecondRef.current = Math.ceil(restTime);
@@ -454,18 +462,19 @@ export default function VMATimer() {
       setDisplayTime(formatTime(remaining));
 
       if (currentPhase === 'countdown' || currentPhase === 'rest') {
-        if (currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
+        if (currentPhase === 'countdown' && currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
           setAnnouncementMade(true);
           makeAnnouncement(currentPhase, currentIndex);
         }
 
-        if (currentSecond <= 5 && currentSecond >= 1 && !beepedSecondsRef.current.has(currentSecond)) {
+        if (currentPhase === 'rest' && currentSecond > 0 && currentSecond < restTime && currentSecond % 10 === 0 && !restTensAnnouncedRef.current.has(currentSecond)) {
+          restTensAnnouncedRef.current.add(currentSecond);
+          speak(`Il reste ${currentSecond} secondes`);
+        }
+
+        if (currentSecond <= 4 && currentSecond >= 1 && !beepedSecondsRef.current.has(currentSecond)) {
           beepedSecondsRef.current.add(currentSecond);
-          if (currentSecond === 1) {
-            beepGo();
-          } else {
-            beepCountdown();
-          }
+          beepCountdown();
         }
       }
 
@@ -473,6 +482,9 @@ export default function VMATimer() {
 
       if (remaining <= 0) {
         startTimeRef.current = null;
+        if (currentPhase === 'countdown' || currentPhase === 'rest') {
+          beepGo();
+        }
         handlePhaseComplete();
         return;
       }
@@ -487,7 +499,7 @@ export default function VMATimer() {
         cancelAnimationFrame(timerRef.current);
       }
     };
-  }, [isRunning, currentPhase, currentIndex, currentPlot, announcementMade, timeLeft, makeAnnouncement, handlePhaseComplete]);
+  }, [isRunning, currentPhase, currentIndex, currentPlot, announcementMade, timeLeft, makeAnnouncement, handlePhaseComplete, restTime]);
 
   const getPhaseDisplay = () => {
     switch (currentPhase) {
