@@ -155,9 +155,11 @@ export default function VMATimer() {
   const [plots, setPlots] = useState(6);
   const [distance, setDistance] = useState(20);
   const [restTime, setRestTime] = useState(30);
+  const [preparationTime, setPreparationTime] = useState(30);
 
   const [workoutList, setWorkoutList] = useState([]);
   const [newVMA, setNewVMA] = useState(12);
+  const [loopEnabled, setLoopEnabled] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [currentPhase, setCurrentPhase] = useState('idle');
@@ -283,14 +285,14 @@ export default function VMATimer() {
     setCurrentPhase('countdown');
     setCurrentIndex(0);
     setCurrentPlot(0);
-    setTimeLeft(30);
+    setTimeLeft(preparationTime);
     setAnnouncementMade(false);
     beepedSecondsRef.current = new Set();
     startTimeRef.current = null;
     lastSecondRef.current = null;
 
     await delay(100);
-    speak('Préparation. 30 secondes.');
+    speak(`Préparation. ${preparationTime} secondes.`);
   };
 
   const stopWorkout = () => {
@@ -379,9 +381,21 @@ export default function VMATimer() {
           }
         } else {
           await delay(2000);
-          speak('Entraînement terminé. Bravo!');
-          setCurrentPhase('finished');
-          setIsRunning(false);
+          if (loopEnabled) {
+            speak(`Préparation. ${preparationTime} secondes.`);
+            setCurrentIndex(0);
+            setCurrentPhase('countdown');
+            setCurrentPlot(0);
+            setTimeLeft(preparationTime);
+            setAnnouncementMade(false);
+            targetTimeRef.current = preparationTime;
+            startTimeRef.current = performance.now();
+            lastSecondRef.current = Math.ceil(preparationTime);
+          } else {
+            speak('Entraînement terminé. Bravo!');
+            setCurrentPhase('finished');
+            setIsRunning(false);
+          }
         }
       }
     } else if (currentPhase === 'rest') {
@@ -402,12 +416,24 @@ export default function VMATimer() {
         startTimeRef.current = performance.now();
         lastSecondRef.current = Math.ceil(timePerPlot);
       } else {
-        speak('Entraînement terminé. Bravo!');
-        setCurrentPhase('finished');
-        setIsRunning(false);
+        if (loopEnabled) {
+          speak(`Préparation. ${preparationTime} secondes.`);
+          setCurrentIndex(0);
+          setCurrentPhase('countdown');
+          setCurrentPlot(0);
+          setTimeLeft(preparationTime);
+          setAnnouncementMade(false);
+          targetTimeRef.current = preparationTime;
+          startTimeRef.current = performance.now();
+          lastSecondRef.current = Math.ceil(preparationTime);
+        } else {
+          speak('Entraînement terminé. Bravo!');
+          setCurrentPhase('finished');
+          setIsRunning(false);
+        }
       }
     }
-  }, [currentPhase, currentIndex, currentPlot, plots, workoutList, distance, restTime]);
+  }, [currentPhase, currentIndex, currentPlot, plots, workoutList, distance, restTime, preparationTime, loopEnabled]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -521,7 +547,7 @@ export default function VMATimer() {
         <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 backdrop-blur border border-slate-700">
           <h2 className="text-lg font-semibold mb-4 text-slate-300">Configuration</h2>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
               <label className="block text-sm text-slate-400 mb-2">Plots</label>
               <div className="flex items-center justify-center gap-2">
@@ -567,6 +593,23 @@ export default function VMATimer() {
                 <span className="text-2xl font-bold w-12">{restTime}</span>
                 <button
                   onClick={() => setRestTime(restTime + 5)}
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                  disabled={isRunning}
+                >+</button>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <label className="block text-sm text-slate-400 mb-2">Préparation (s)</label>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setPreparationTime(Math.max(5, preparationTime - 5))}
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                  disabled={isRunning}
+                >-</button>
+                <span className="text-2xl font-bold w-12">{preparationTime}</span>
+                <button
+                  onClick={() => setPreparationTime(preparationTime + 5)}
                   className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >+</button>
@@ -692,7 +735,20 @@ export default function VMATimer() {
 
         {/* Workout List */}
         <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur border border-slate-700">
-          <h2 className="text-lg font-semibold mb-4 text-slate-300">Programme</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-300">Programme</h2>
+            <button
+              type="button"
+              onClick={() => !isRunning && setLoopEnabled((prev) => !prev)}
+              disabled={isRunning}
+              title={loopEnabled ? 'Boucle activée : le programme redémarre à la fin' : 'Activer la boucle : redémarrer le programme à la fin'}
+              className={`p-2 rounded-lg transition ${loopEnabled ? 'bg-cyan-500/30 text-cyan-400' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-slate-300'} ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
 
           {workoutList.length === 0 ? (
             <p className="text-slate-500 text-center py-4">
