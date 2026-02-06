@@ -152,11 +152,17 @@ const calculateTimePerPlot = (vma, distance) => {
   return (distance * 3.6) / vma;
 };
 
+// Liste de VMA utilisée pour le mode "Plots Counter" (pas de 0.5 de 8 à 20)
+const PLOTS_COUNTER_VMAS = Array.from({ length: ((20 - 8) / 0.5) + 1 }, (_, i) => 8 + i * 0.5);
+
 export default function VMATimer() {
+  const [mode, setMode] = useState('multi-vma'); // 'multi-vma' | 'plots-counter'
+
   const [plots, setPlots] = useState(6);
   const [distance, setDistance] = useState(20);
   const [restTime, setRestTime] = useState(30);
   const [preparationTime, setPreparationTime] = useState(30);
+  const [referenceTime, setReferenceTime] = useState(30);
 
   const [workoutList, setWorkoutList] = useState([]);
   const [newVMA, setNewVMA] = useState(12);
@@ -171,6 +177,8 @@ export default function VMATimer() {
   const [announcementMade, setAnnouncementMade] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
+
+  const isPlotsCounter = mode === 'plots-counter';
 
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -201,6 +209,13 @@ export default function VMATimer() {
 
       // Init Tone.js
       await Tone.start();
+      // iOS Safari : s'assurer que le contexte audio est bien réveillé
+      if (Tone.getContext && Tone.getContext()) {
+        const ctx = Tone.getContext();
+        if (ctx.state === 'suspended' && ctx.resume) {
+          await ctx.resume();
+        }
+      }
       await initSynth();
       await beepTest();
 
@@ -278,7 +293,7 @@ export default function VMATimer() {
   };
 
   const startWorkout = async () => {
-    if (workoutList.length === 0) return;
+    if (!isPlotsCounter && workoutList.length === 0) return;
 
     // Wake speech and init audio
     wakeSpeech();
@@ -293,6 +308,7 @@ export default function VMATimer() {
     setTimeLeft(preparationTime);
     setAnnouncementMade(false);
     beepedSecondsRef.current = new Set();
+    restTensAnnouncedRef.current = new Set();
     startTimeRef.current = null;
     lastSecondRef.current = null;
 
@@ -326,6 +342,40 @@ export default function VMATimer() {
     lastSecondRef.current = null;
     beepedSecondsRef.current = new Set();
 
+    // Mode Plots Counter : logique simple préparation -> exercice (référence) -> repos -> boucle
+    if (isPlotsCounter) {
+      if (currentPhase === 'countdown') {
+        setCurrentPhase('running');
+        setTimeLeft(referenceTime);
+        setAnnouncementMade(false);
+        targetTimeRef.current = referenceTime;
+        startTimeRef.current = performance.now();
+        lastSecondRef.current = Math.ceil(referenceTime);
+      } else if (currentPhase === 'running') {
+        await beepGo();
+        await speak(`${restTime} secondes de repos`);
+        restTensAnnouncedRef.current = new Set();
+        setCurrentPhase('rest');
+        setTimeLeft(restTime);
+        setAnnouncementMade(false);
+        targetTimeRef.current = restTime;
+        startTimeRef.current = performance.now();
+        lastSecondRef.current = Math.ceil(restTime);
+      } else if (currentPhase === 'rest') {
+        // Après la première boucle : pas de nouvelle préparation,
+        // on enchaîne directement Exercice ↔ Repos
+        setCurrentPhase('running');
+        setTimeLeft(referenceTime);
+        setAnnouncementMade(false);
+        targetTimeRef.current = referenceTime;
+        startTimeRef.current = performance.now();
+        lastSecondRef.current = Math.ceil(referenceTime);
+      }
+      phaseCompleteTriggeredRef.current = false;
+      return;
+    }
+
+    // Mode Multi-VMA : logique existante
     if (currentPhase === 'countdown') {
       let firstVMAIndex = 0;
       while (firstVMAIndex < workoutList.length && workoutList[firstVMAIndex].type !== 'vma') {
@@ -446,7 +496,7 @@ export default function VMATimer() {
       }
     }
     phaseCompleteTriggeredRef.current = false;
-  }, [currentPhase, currentIndex, currentPlot, plots, workoutList, distance, restTime, preparationTime, loopEnabled]);
+  }, [isPlotsCounter, currentPhase, currentIndex, currentPlot, plots, workoutList, distance, restTime, referenceTime, preparationTime, loopEnabled, getNextVMAItem]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -467,17 +517,41 @@ export default function VMATimer() {
       setDisplayTime(formatTime(remaining));
 
       if (currentPhase === 'countdown' || currentPhase === 'rest') {
-        if (currentPhase === 'countdown' && currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
-          setAnnouncementMade(true);
-          makeAnnouncement(currentPhase, currentIndex);
+        if (currentPhase === 'countdown') {
+          if (isPlotsCounter) {
+            // Annonces spécifiques Plots Counter : début exercice
+            if (preparationTime >= 20 && currentSecond === 20 && !restTensAnnouncedRef.current.has(20)) {
+              restTensAnnouncedRef.current.add(20);
+              speak('Début de l\'exercice dans 20 secondes');
+            }
+            if (preparationTime >= 10 && currentSecond === 10 && !restTensAnnouncedRef.current.has(10)) {
+              restTensAnnouncedRef.current.add(10);
+              speak('Début de l\'exercice dans 10 secondes');
+            }
+          } else if (currentSecond <= 12 && currentSecond > 8 && !announcementMade) {
+            setAnnouncementMade(true);
+            makeAnnouncement(currentPhase, currentIndex);
+          }
         }
 
-        if (currentPhase === 'rest' && currentSecond > 0 && currentSecond < restTime && currentSecond % 10 === 0 && !restTensAnnouncedRef.current.has(currentSecond)) {
-          restTensAnnouncedRef.current.add(currentSecond);
-          speak(`Il reste ${currentSecond} secondes`);
+        if (currentPhase === 'rest') {
+          if (isPlotsCounter) {
+            // Annonces spécifiques Plots Counter : reprise
+            if (restTime >= 20 && currentSecond === 20 && !restTensAnnouncedRef.current.has(20)) {
+              restTensAnnouncedRef.current.add(20);
+              speak('Reprise dans 20 secondes');
+            }
+            if (restTime >= 10 && currentSecond === 10 && !restTensAnnouncedRef.current.has(10)) {
+              restTensAnnouncedRef.current.add(10);
+              speak('Reprise dans 10 secondes');
+            }
+          } else if (currentSecond > 0 && currentSecond < restTime && currentSecond % 10 === 0 && !restTensAnnouncedRef.current.has(currentSecond)) {
+            restTensAnnouncedRef.current.add(currentSecond);
+            speak(`Il reste ${currentSecond} secondes`);
+          }
         }
 
-        if (currentSecond <= 4 && currentSecond >= 1 && !beepedSecondsRef.current.has(currentSecond)) {
+        if (currentSecond <= 5 && currentSecond >= 1 && !beepedSecondsRef.current.has(currentSecond)) {
           beepedSecondsRef.current.add(currentSecond);
           beepCountdown();
         }
@@ -506,13 +580,16 @@ export default function VMATimer() {
         cancelAnimationFrame(timerRef.current);
       }
     };
-  }, [isRunning, currentPhase, currentIndex, currentPlot, announcementMade, timeLeft, makeAnnouncement, handlePhaseComplete, restTime]);
+  }, [isRunning, currentPhase, currentIndex, currentPlot, announcementMade, timeLeft, makeAnnouncement, handlePhaseComplete, restTime, preparationTime, isPlotsCounter]);
 
   const getPhaseDisplay = () => {
     switch (currentPhase) {
       case 'idle': return 'Prêt';
       case 'countdown': return 'Préparation';
       case 'running':
+        if (isPlotsCounter) {
+          return 'Exercice';
+        }
         const item = workoutList[currentIndex];
         return `VMA ${item?.value} - Plot ${currentPlot + 1}/${plots}`;
       case 'rest': return 'Repos';
@@ -538,6 +615,32 @@ export default function VMATimer() {
         <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
           VMA Timer
         </h1>
+
+        {/* Modes : Multi-VMA / Plots Counter */}
+        <div className="flex justify-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => setMode('multi-vma')}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition border ${
+              mode === 'multi-vma'
+                ? 'bg-cyan-500 text-white border-cyan-400 shadow-lg shadow-cyan-500/30'
+                : 'bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700'
+            }`}
+          >
+            Multi-VMA
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('plots-counter')}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition border ${
+              mode === 'plots-counter'
+                ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/30'
+                : 'bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700'
+            }`}
+          >
+            Plots Counter
+          </button>
+        </div>
 
         {/* Audio Test Button */}
         <div className="mb-6">
@@ -567,22 +670,41 @@ export default function VMATimer() {
           <h2 className="text-lg font-semibold mb-4 text-slate-300">Configuration</h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <label className="block text-sm text-slate-400 mb-2">Plots</label>
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setPlots(Math.max(1, plots - 1))}
-                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
-                  disabled={isRunning}
-                >-</button>
-                <span className="text-2xl font-bold w-12">{plots}</span>
-                <button
-                  onClick={() => setPlots(plots + 1)}
-                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
-                  disabled={isRunning}
-                >+</button>
+            {!isPlotsCounter ? (
+              <div className="text-center">
+                <label className="block text-sm text-slate-400 mb-2">Plots</label>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setPlots(Math.max(1, plots - 1))}
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                    disabled={isRunning}
+                  >-</button>
+                  <span className="text-2xl font-bold w-12">{plots}</span>
+                  <button
+                    onClick={() => setPlots(plots + 1)}
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                    disabled={isRunning}
+                  >+</button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center">
+                <label className="block text-sm text-slate-400 mb-2">Référence (s)</label>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setReferenceTime(Math.max(5, referenceTime - 5))}
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                    disabled={isRunning}
+                  >-</button>
+                  <span className="text-2xl font-bold w-16">{referenceTime}</span>
+                  <button
+                    onClick={() => setReferenceTime(referenceTime + 5)}
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                    disabled={isRunning}
+                  >+</button>
+                </div>
+              </div>
+            )}
 
             <div className="text-center">
               <label className="block text-sm text-slate-400 mb-2">Distance (m)</label>
@@ -672,7 +794,7 @@ export default function VMATimer() {
             <>
               <button
                 onClick={startWorkout}
-                disabled={workoutList.length === 0 || !audioReady}
+                disabled={(!isPlotsCounter && workoutList.length === 0) || !audioReady}
                 className="px-8 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-xl font-semibold text-lg transition flex items-center gap-2"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -716,111 +838,165 @@ export default function VMATimer() {
           )}
         </div>
 
-        {/* Add VMA/Pause */}
-        <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 backdrop-blur border border-slate-700">
-          <h2 className="text-lg font-semibold mb-4 text-slate-300">Ajouter</h2>
+        {/* Section centrale : dépend du mode sélectionné */}
+        {!isPlotsCounter ? (
+          <>
+            {/* Add VMA/Pause */}
+            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 backdrop-blur border border-slate-700">
+              <h2 className="text-lg font-semibold mb-4 text-slate-300">Ajouter</h2>
 
-          <div className="flex gap-3 mb-4">
-            <div className="flex-1 flex items-center gap-2 bg-slate-700/50 rounded-xl p-3">
-              <span className="text-slate-400">VMA:</span>
-              <input
-                type="number"
-                value={newVMA}
-                onChange={(e) => setNewVMA(Number(e.target.value))}
-                className="w-16 bg-transparent text-center text-xl font-bold focus:outline-none"
-                min="8"
-                max="25"
-                step="0.5"
-                disabled={isRunning}
-              />
+              <div className="flex gap-3 mb-4">
+                <div className="flex-1 flex items-center gap-2 bg-slate-700/50 rounded-xl p-3">
+                  <span className="text-slate-400">VMA:</span>
+                  <input
+                    type="number"
+                    value={newVMA}
+                    onChange={(e) => setNewVMA(Number(e.target.value))}
+                    className="w-16 bg-transparent text-center text-xl font-bold focus:outline-none"
+                    min="8"
+                    max="25"
+                    step="0.5"
+                    disabled={isRunning}
+                  />
+                  <button
+                    onClick={addVMA}
+                    disabled={isRunning}
+                    className="ml-auto px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition"
+                  >
+                    + VMA
+                  </button>
+                </div>
+              </div>
+
               <button
-                onClick={addVMA}
+                onClick={addPause}
                 disabled={isRunning}
-                className="ml-auto px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 rounded-lg font-medium transition"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 rounded-xl font-medium transition"
               >
-                + VMA
+                + Pause ({restTime}s)
               </button>
             </div>
-          </div>
 
-          <button
-            onClick={addPause}
-            disabled={isRunning}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 rounded-xl font-medium transition"
-          >
-            + Pause ({restTime}s)
-          </button>
-        </div>
-
-        {/* Workout List */}
-        <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-300">Programme</h2>
-            <button
-              type="button"
-              onClick={() => !isRunning && setLoopEnabled((prev) => !prev)}
-              disabled={isRunning}
-              title={loopEnabled ? 'Boucle activée : le programme redémarre à la fin' : 'Activer la boucle : redémarrer le programme à la fin'}
-              className={`p-2 rounded-lg transition ${loopEnabled ? 'bg-cyan-500/30 text-cyan-400' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-slate-300'} ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-
-          {workoutList.length === 0 ? (
-            <p className="text-slate-500 text-center py-4">
-              Ajoutez des VMA et des pauses pour créer votre programme
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {workoutList.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between p-3 rounded-xl transition ${
-                    isRunning && index === currentIndex
-                      ? 'bg-white/20 ring-2 ring-white/50'
-                      : 'bg-slate-700/50'
-                  } ${isRunning && index < currentIndex ? 'opacity-50' : ''}`}
+            {/* Workout List */}
+            <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur border border-slate-700">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-300">Programme</h2>
+                <button
+                  type="button"
+                  onClick={() => !isRunning && setLoopEnabled((prev) => !prev)}
+                  disabled={isRunning}
+                  title={loopEnabled ? 'Boucle activée : le programme redémarre à la fin' : 'Activer la boucle : redémarrer le programme à la fin'}
+                  className={`p-2 rounded-lg transition ${loopEnabled ? 'bg-cyan-500/30 text-cyan-400' : 'bg-slate-700/50 text-slate-400 hover:bg-slate-600 hover:text-slate-300'} ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs">
-                      {index + 1}
-                    </span>
-                    {item.type === 'vma' ? (
-                      <div>
-                        <span className="font-semibold text-green-400">VMA {item.value}</span>
-                        <span className="text-sm text-slate-400 ml-2">
-                          ({plots} × {calculateTimePerPlot(item.value, distance).toFixed(1)}s)
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="font-semibold text-blue-400">Pause {restTime}s</span>
-                    )}
-                  </div>
-                  {!isRunning && (
-                    <button
-                      onClick={() => removeItem(index)}
-                      className="w-8 h-8 rounded-lg bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white transition flex items-center justify-center"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
 
-          {workoutList.length > 0 && !isRunning && (
-            <button
-              onClick={() => setWorkoutList([])}
-              className="w-full mt-4 py-2 text-red-400 hover:text-red-300 text-sm transition"
-            >
-              Tout effacer
-            </button>
-          )}
-        </div>
+              {workoutList.length === 0 ? (
+                <p className="text-slate-500 text-center py-4">
+                  Ajoutez des VMA et des pauses pour créer votre programme
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {workoutList.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-3 rounded-xl transition ${
+                        isRunning && index === currentIndex
+                          ? 'bg-white/20 ring-2 ring-white/50'
+                          : 'bg-slate-700/50'
+                      } ${isRunning && index < currentIndex ? 'opacity-50' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-xs">
+                          {index + 1}
+                        </span>
+                        {item.type === 'vma' ? (
+                          <div>
+                            <span className="font-semibold text-green-400">VMA {item.value}</span>
+                            <span className="text-sm text-slate-400 ml-2">
+                              ({plots} × {calculateTimePerPlot(item.value, distance).toFixed(1)}s)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-blue-400">Pause {restTime}s</span>
+                        )}
+                      </div>
+                      {!isRunning && (
+                        <button
+                          onClick={() => removeItem(index)}
+                          className="w-8 h-8 rounded-lg bg-red-600/30 hover:bg-red-600 text-red-400 hover:text-white transition flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {workoutList.length > 0 && !isRunning && (
+                <button
+                  onClick={() => setWorkoutList([])}
+                  className="w-full mt-4 py-2 text-red-400 hover:text-red-300 text-sm transition"
+                >
+                  Tout effacer
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 backdrop-blur border border-emerald-600/60">
+            <h2 className="text-lg font-semibold mb-2 text-emerald-300">Plots Counter</h2>
+            <p className="text-xs text-slate-400 mb-4">
+              Nombre de plots dépassés en <span className="font-semibold text-emerald-200">{referenceTime}s</span> pour
+              chaque VMA, avec une distance entre plots de{' '}
+              <span className="font-semibold text-emerald-200">{distance} m</span>.
+            </p>
+
+            <div className="overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/40">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-800">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold text-slate-200">VMA (km/h)</th>
+                    <th className="px-4 py-2 text-right font-semibold text-slate-200">Plots en {referenceTime}s</th>
+                    <th className="px-4 py-2 text-right font-semibold text-slate-200">Distance parcourue (m)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {PLOTS_COUNTER_VMAS.map((vma) => {
+                    const timePerPlot = calculateTimePerPlot(vma, distance);
+                    const rawCount = referenceTime > 0 ? referenceTime / timePerPlot : 0;
+                    // Autoriser des demi-plots pour affiner la VMA (pas de 0.5)
+                    const count = Math.round(rawCount * 2) / 2;
+                    const distanceCovered = count * distance;
+
+                    return (
+                      <tr key={vma} className="odd:bg-slate-800/40 even:bg-slate-800/10">
+                        <td className="px-4 py-2 text-slate-100 font-medium">
+                          VMA {vma}
+                        </td>
+                        <td className="px-4 py-2 text-right text-emerald-300 font-semibold">
+                          {count.toFixed(count % 1 === 0 ? 0 : 1)} plot{count > 1 ? 's' : ''}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sky-300 font-semibold">
+                          {distanceCovered.toFixed(1)} m
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-3 text-[11px] text-slate-500">
+              Calcul : on utilise la VMA de référence dans la cellule de gauche, la distance entre les plots et le temps
+              de référence pour estimer combien de plots tu peux dépasser.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 text-center text-slate-500 text-sm">
           <p>Distance totale par série: {plots * distance}m</p>
