@@ -38,5 +38,21 @@ jobs:
           aws-region: eu-west-3
 
       - name: Deploy with Serverless
+        env:
+          # Secrets à définir dans GitHub > Settings > Secrets and variables > Actions
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          # Optionnels (si utilisés par ton frontend / config)
+          PROTOCOLE: ${{ secrets.PROTOCOLE }}
+          CLIENT_IP: ${{ secrets.CLIENT_IP }}
+          CLIENT_PORT: ${{ secrets.CLIENT_PORT }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: npx serverless deploy
 
