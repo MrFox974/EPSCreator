@@ -7,22 +7,19 @@ provider:
   stage: dev
   environment:
     NODE_ENV: production
-    # IMPORTANT: ne pas committer de secrets en clair.
-    # Les variables ci-dessous sont injectées au moment du deploy (GitHub Actions)
-    # et deviennent les variables d'environnement de la Lambda.
-    DATABASE_NAME: ${env:DATABASE_NAME, 'postgres'}
-    DATABASE_USER: ${env:DATABASE_USER, 'postgres'}
-    DATABASE_PASSWORD: ${env:DATABASE_PASSWORD}
-    DATABASE_HOST: ${env:DATABASE_HOST, 'db.wvvawjjfpdgcdnmedboh.supabase.co'}
-    DATABASE_PORT: ${env:DATABASE_PORT, 5432}
-    PROTOCOLE: ${env:PROTOCOLE, 'https'}
-    CORS_ORIGIN: ${env:CORS_ORIGIN}
-    CLIENT_IP: ${env:CLIENT_IP, ''}
-    CLIENT_PORT: ${env:CLIENT_PORT, ''}
-    SERVER_PORT: ${env:SERVER_PORT, 8080}
-    SERVER_HOST: ${env:SERVER_HOST, ''}
-    JWT_SECRET: ${env:JWT_SECRET}
-    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET}
+    DATABASE_NAME: postgres
+    DATABASE_USER: postgres
+    DATABASE_PASSWORD: !+HipHop97424+!
+    DATABASE_HOST: db.wvvawjjfpdgcdnmedboh.supabase.co
+    DATABASE_PORT: 5432
+    PROTOCOLE: https
+    CORS_ORIGIN: https://main.d2foa299n6ioy9.amplifyapp.com
+    CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com
+    CLIENT_PORT: 5748
+    SERVER_PORT: 8080
+    SERVER_HOST: backend-production-2f14.up.railway.app
+    JWT_SECRET: 095d69926a23f86c
+    JWT_REFRESH_SECRET: 83ez354d8ht4tsgs
 
 
 functions:
