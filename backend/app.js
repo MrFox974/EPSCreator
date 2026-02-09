@@ -18,15 +18,17 @@ const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 app.use(cors({
   origin: function (origin, callback) {
     console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin);
-    // Pas d'Origin ou origine autorisée → accepter
+    // Pas d'Origin (requêtes sans Origin comme curl) ou origine autorisée → accepter
     if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-CSRF-Token']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  maxAge: 86400 // 24 heures pour le cache preflight
 }));
 
 app.use(express.json());
@@ -54,9 +56,14 @@ app.use((err, req, res, next) => {
   if (ok && origin) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
   }
   
-  res.status(err.status || 500).json({
+  // Si c'est une erreur CORS, retourner 403 au lieu de 500
+  const statusCode = err.message && err.message.includes('CORS') ? 403 : (err.status || 500);
+  
+  res.status(statusCode).json({
     error: err.message || 'Internal server error',
     details: process.env.NODE_ENV === 'production' ? undefined : err.stack,
   });
