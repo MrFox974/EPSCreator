@@ -37,7 +37,7 @@ resources:
           Fn::GetAtt:
             - ApiLambdaFunction
             - Arn
-        Action: lambda:InvokeFunctionUrl
+        Action: lambda:InvokeFunction
         Principal: '*'
         FunctionUrlAuthType: NONE
         InvokedViaFunctionUrl: true
