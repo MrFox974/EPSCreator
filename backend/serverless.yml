@@ -25,4 +25,6 @@ provider:
 functions:
   api:
     handler: handler.handler
-    url: true
+    url:
+      authorizer: NONE  # Accès public (pas de signature AWS_IAM requise)
+      cors: false  # CORS géré par Express dans app.js, pas par AWS
