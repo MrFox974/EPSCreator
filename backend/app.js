@@ -14,14 +14,35 @@ console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
 
 const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 
+// Gérer les requêtes OPTIONS (preflight) explicitement AVANT le middleware CORS
+app.options('*', (req, res) => {
+  const origin = req.headers.origin || req.headers.Origin;
+  console.log('OPTIONS preflight - Origin:', origin, 'Allowed:', allowedOrigin, 'CORS_ORIGIN env:', process.env.CORS_ORIGIN);
+  
+  if (isOriginAllowed(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
+    res.header('Access-Control-Max-Age', '86400');
+    console.log('OPTIONS preflight - Headers CORS ajoutés pour:', origin);
+    return res.status(200).end();
+  }
+  
+  console.log('OPTIONS preflight - Origin non autorisée:', origin);
+  res.status(403).end();
+});
+
 // Un seul middleware CORS pour éviter le header Access-Control-Allow-Origin en double
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin);
+    console.log('CORS check - Origin:', origin, 'Allowed:', allowedOrigin, 'CORS_ORIGIN env:', process.env.CORS_ORIGIN);
     // Pas d'Origin (requêtes sans Origin comme curl) ou origine autorisée → accepter
     if (isOriginAllowed(origin)) {
+      console.log('CORS check - Origin autorisée');
       return callback(null, true);
     }
+    console.log('CORS check - Origin refusée');
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -35,8 +56,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false })); 
 // Ne pas toucher à extended: true, ça peut causer des problèmes avec les données de la BDD.
 
+// Middleware pour ajouter les headers CORS à toutes les réponses (backup si cors() ne fonctionne pas)
+app.use((req, res, next) => {
+  const origin = req.headers.origin || req.headers.Origin;
+  if (isOriginAllowed(origin) && origin) {
+    // Ne pas écraser si déjà défini par cors()
+    if (!res.getHeader('Access-Control-Allow-Origin')) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
+  }
+  next();
+});
+
 require('./models/Test');
 require('./models/index'); // Charge tous les modèles avec leurs associations
+
+// Route de health check à la racine
+app.get('/', (req, res) => {
+  const origin = req.headers.origin || req.headers.Origin;
+  const allowed = (process.env.CORS_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, '');
+  
+  if (origin && (!allowed || origin === allowed)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  res.json({ 
+    status: 'ok', 
+    message: 'Lambda Function URL is working',
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use('/api', require('./router/test.route'));
 app.use('/api', require('./router/fiche-eps.route'));
