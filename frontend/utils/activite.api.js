@@ -1,7 +1,7 @@
 import api from './api';
 
 /**
- * Service API pour les activités support
+ * Service API pour les activités support (test)
  */
 
 export const getActivitesByClasse = async (classeId) => {
