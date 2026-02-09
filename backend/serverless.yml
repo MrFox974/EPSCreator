@@ -26,3 +26,18 @@ functions:
   api:
     handler: handler.handler
     url: true  # Crée une Function URL publique (authorizer NONE par défaut)
+
+# Resource-based policy pour autoriser l'accès public à la Function URL
+resources:
+  Resources:
+    ApiLambdaFunctionUrlPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          Fn::GetAtt:
+            - ApiLambdaFunction
+            - Arn
+        Action: lambda:InvokeFunctionUrl
+        Principal: '*'
+        FunctionUrlAuthType: NONE
+        InvokedViaFunctionUrl: true
