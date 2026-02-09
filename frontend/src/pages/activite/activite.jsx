@@ -23,14 +23,15 @@ import { CSS } from '@dnd-kit/utilities';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
 import { getActiviteById } from '../../../utils/activite.api';
-import { createFiche, deleteFiche, reorderFiches } from '../../../utils/fiche-eps.api';
+import { createFiche, deleteFiche, reorderFiches, getFicheById } from '../../../utils/fiche-eps.api';
 import { getSequencesByActivite, createSequence, deleteSequence } from '../../../utils/sequence.api';
+import { generateLeconPDFFromData } from '../../../utils/pdf-generator';
 
 // Désactiver toutes les animations
 const animateLayoutChanges = () => false;
 
 // Composant pour une leçon draggable
-function SortableLeconCard({ lecon, activite, isReordering, onDelete, onClick }) {
+function SortableLeconCard({ lecon, activite, isReordering, onDelete, onClick, onDownload }) {
   const {
     attributes,
     listeners,
@@ -112,18 +113,32 @@ function SortableLeconCard({ lecon, activite, isReordering, onDelete, onClick })
               </p>
             </div>
           </div>
-          <button
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              onDelete(lecon);
-            }}
-            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-            title="Supprimer"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onDownload(lecon);
+              }}
+              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Télécharger en PDF"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onDelete(lecon);
+              }}
+              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Supprimer"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="mt-4 flex items-center justify-between">
           <span className="text-xs text-slate-400">
@@ -241,16 +256,41 @@ function Activite() {
   const handleLeconSubmit = async (e) => {
     e.preventDefault();
     try {
-      const result = await createFiche({ 
+      // Récupérer la dernière leçon pour la copier si elle existe
+      const lastLecon = lecons.length > 0 ? lecons[lecons.length - 1] : null;
+      
+      const ficheData = { 
         titre: leconForm.titre || 'Nouvelle leçon EPS',
         lecon_numero: leconForm.lecon_numero,
         activite_support_id: parseInt(id),
         ordre: lecons.length
-      });
+      };
+      
+      // Si une leçon précédente existe, copier son contenu
+      if (lastLecon) {
+        ficheData.copyFromId = lastLecon.id;
+      }
+      
+      const result = await createFiche(ficheData);
       setLeconModal({ open: false });
       navigate(`/lecon/${result.fiche.id}`);
     } catch (error) {
       console.error('Erreur:', error);
+    }
+  };
+
+  // Télécharger une leçon en PDF
+  const handleDownloadPDF = async (lecon) => {
+    try {
+      // Charger la leçon complète
+      const data = await getFicheById(lecon.id);
+      if (data.fiche) {
+        const filename = `${lecon.titre || 'lecon'}_${lecon.lecon_numero || ''}`.replace(/[^a-z0-9]/gi, '_');
+        await generateLeconPDFFromData(data.fiche, filename);
+      }
+    } catch (error) {
+      console.error('Erreur lors du téléchargement PDF:', error);
+      alert('Erreur lors de la génération du PDF');
     }
   };
 
@@ -575,6 +615,7 @@ function Activite() {
                 isReordering={false}
                 onDelete={(l) => setConfirmModal({ open: true, id: l.id, name: l.titre || 'cette leçon', type: 'lecon' })}
                 onClick={() => navigate(`/lecon/${lecon.id}`)}
+                onDownload={handleDownloadPDF}
               />
             ))}
           </div>

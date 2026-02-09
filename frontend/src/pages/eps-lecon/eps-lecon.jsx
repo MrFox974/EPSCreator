@@ -10,6 +10,7 @@ import SavePopup from '../../components/SavePopup';
 import SituationCard from '../../components/SituationCard';
 import ConfirmModal from '../../components/ConfirmModal';
 import { getFicheById, updateFiche } from '../../../utils/fiche-eps.api';
+import { generateLeconPDFFromData } from '../../../utils/pdf-generator';
 
 // Situation vide par défaut
 const emptySituation = {
@@ -226,6 +227,18 @@ function EpsLecon() {
     setConfirmModal({ isOpen: false, type: null, index: null });
   }, []);
 
+  // Télécharger la leçon en PDF
+  const handleDownloadPDF = useCallback(async () => {
+    try {
+      const currentFiche = ficheRef.current;
+      const filename = `${currentFiche.titre || 'lecon'}_${currentFiche.lecon_numero || ''}`.replace(/[^a-z0-9]/gi, '_');
+      await generateLeconPDFFromData(currentFiche, filename);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement PDF:', error);
+      alert('Erreur lors de la génération du PDF');
+    }
+  }, []);
+
   // Composant pour afficher du texte multiligne éditable
   const MultilineEditable = ({ fieldName, className = '' }) => (
     <EditableField
@@ -281,7 +294,7 @@ function EpsLecon() {
     <div className="bg-white min-h-screen overflow-x-hidden">
       {/* Barre de navigation */}
       <div className="bg-slate-50 border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-3">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <button
             onClick={() => {
               // Retourner vers l'activité si disponible, sinon vers le dashboard
@@ -297,6 +310,16 @@ function EpsLecon() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span className="font-medium">Retour à l'activité</span>
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2d5a87] transition-colors"
+            title="Télécharger en PDF"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="font-medium">Télécharger PDF</span>
           </button>
         </div>
       </div>

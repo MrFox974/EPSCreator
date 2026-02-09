@@ -36,11 +36,36 @@ exports.getById = async (req, res) => {
 
 /**
  * Créer une nouvelle fiche EPS
+ * Si copyFromId est fourni, copie le contenu de la fiche source (sauf id, titre, lecon_numero, ordre, timestamps)
  */
 exports.create = async (req, res) => {
   try {
-    const fiche = await FicheEPS.create(req.body);
-    res.status(201).json({ fiche, message: 'Fiche créée avec succès' });
+    const { copyFromId, ...ficheData } = req.body;
+    
+    // Si copyFromId est fourni, récupérer la fiche source
+    if (copyFromId) {
+      const sourceFiche = await FicheEPS.findByPk(copyFromId);
+      
+      if (!sourceFiche) {
+        return res.status(404).json({ error: 'Fiche source non trouvée' });
+      }
+      
+      // Récupérer toutes les données de la fiche source
+      const sourceData = sourceFiche.toJSON();
+      
+      // Exclure les champs à ne pas copier
+      const excludedFields = ['id', 'titre', 'lecon_numero', 'ordre', 'created_at', 'updated_at', 'activite_support_id'];
+      excludedFields.forEach(field => delete sourceData[field]);
+      
+      // Merger les données de la source avec les nouvelles données (les nouvelles données écrasent)
+      const mergedData = { ...sourceData, ...ficheData };
+      
+      const fiche = await FicheEPS.create(mergedData);
+      res.status(201).json({ fiche, message: 'Fiche créée avec succès (copie de la leçon précédente)' });
+    } else {
+      const fiche = await FicheEPS.create(ficheData);
+      res.status(201).json({ fiche, message: 'Fiche créée avec succès' });
+    }
   } catch (error) {
     console.error('Erreur lors de la création de la fiche:', error);
     res.status(500).json({ error: 'Erreur serveur', details: error.message });
