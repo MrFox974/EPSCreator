@@ -14,7 +14,7 @@ console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
 
 const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 
-// Gérer les requêtes OPTIONS (preflight) explicitement AVANT le middleware CORS (test)
+// Gérer les requêtes OPTIONS (preflight) explicitement AVANT le middleware CORS ()
 app.options('*', (req, res) => {
   const origin = req.headers.origin || req.headers.Origin;
   console.log('OPTIONS preflight - Origin:', origin, 'Allowed:', allowedOrigin, 'CORS_ORIGIN env:', process.env.CORS_ORIGIN);
