@@ -5,6 +5,10 @@ const { Ecole, Classe, ActiviteSupport } = require('../models');
  */
 exports.getAll = async (req, res) => {
   try {
+    // Vérifier que la connexion DB est établie
+    const { sequelize } = require('../config/database');
+    await sequelize.authenticate();
+    
     const ecoles = await Ecole.findAll({
       include: [{
         model: Classe,
@@ -20,7 +24,12 @@ exports.getAll = async (req, res) => {
     res.json({ ecoles });
   } catch (error) {
     console.error('Erreur lors de la récupération des écoles:', error);
-    res.status(500).json({ error: 'Erreur serveur', details: error.message });
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Erreur serveur', 
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 };
 
@@ -58,6 +67,10 @@ exports.getById = async (req, res) => {
  */
 exports.create = async (req, res) => {
   try {
+    // Vérifier que la connexion DB est établie
+    const { sequelize } = require('../config/database');
+    await sequelize.authenticate();
+    
     const { nom, description, couleur } = req.body;
     
     if (!nom) {
@@ -68,7 +81,12 @@ exports.create = async (req, res) => {
     res.status(201).json({ ecole, message: 'École créée avec succès' });
   } catch (error) {
     console.error('Erreur lors de la création de l\'école:', error);
-    res.status(500).json({ error: 'Erreur serveur', details: error.message });
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Erreur serveur', 
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 };
 

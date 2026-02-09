@@ -34,9 +34,9 @@ const connectToDB = async () => {
   }
 };
 
-const connectModels = async (force) => {
+const connectModels = async (options = {}) => {
     try{
-        await sequelize.sync(force);
+        await sequelize.sync(options);
         console.log('All models were synchronized successfully.');
     }catch(error){
         console.error('Impossible de synchroniser les models :', error);
