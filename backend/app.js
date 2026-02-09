@@ -14,23 +14,26 @@ console.log('CORS Configuration - Allowed Origin:', allowedOrigin);
 
 const isOriginAllowed = (origin) => !origin || origin === allowedOrigin;
 
-// Gérer les requêtes OPTIONS (preflight) explicitement AVANT le middleware CORS (dqz)
-app.options('*', (req, res) => {
-  const origin = req.headers.origin || req.headers.Origin;
-  console.log('OPTIONS preflight - Origin:', origin, 'Allowed:', allowedOrigin, 'CORS_ORIGIN env:', process.env.CORS_ORIGIN);
-  
-  if (isOriginAllowed(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
-    res.header('Access-Control-Max-Age', '86400');
-    console.log('OPTIONS preflight - Headers CORS ajoutés pour:', origin);
-    return res.status(200).end();
+// Gérer les requêtes OPTIONS (preflight) explicitement AVANT le middleware CORS
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin || req.headers.Origin;
+    console.log('OPTIONS preflight - Origin:', origin, 'Allowed:', allowedOrigin, 'CORS_ORIGIN env:', process.env.CORS_ORIGIN);
+    
+    if (isOriginAllowed(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
+      res.header('Access-Control-Max-Age', '86400');
+      console.log('OPTIONS preflight - Headers CORS ajoutés pour:', origin);
+      return res.status(200).end();
+    }
+    
+    console.log('OPTIONS preflight - Origin non autorisée:', origin);
+    return res.status(403).end();
   }
-  
-  console.log('OPTIONS preflight - Origin non autorisée:', origin);
-  res.status(403).end();
+  next();
 });
 
 // Un seul middleware CORS pour éviter le header Access-Control-Allow-Origin en double
