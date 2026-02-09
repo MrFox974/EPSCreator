@@ -11,7 +11,7 @@ provider:
     DATABASE_USER: postgres.mvlkdzgmyehjtttvtyhg
     DATABASE_PASSWORD: "!+HipHop97424+!"
     DATABASE_HOST: aws-1-eu-west-1.pooler.supabase.com
-    DATABASE_PORT: 5432
+    DATABASE_PORT: 6543
     PROTOCOLE: https
     CORS_ORIGIN: https://main.d3oiure94jwg4o.amplifyapp.com
     CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com

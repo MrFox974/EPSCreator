@@ -128,7 +128,9 @@ connectToDB().catch(err => {
   console.error('Failed to connect to database:', err);
 });
 
-connectModels({ alter: true }).catch(err => {
+// sync() sans options crée les tables manquantes sans supprimer les données existantes
+// alter: true modifie les tables existantes mais ne crée pas celles qui manquent
+connectModels({}).catch(err => {
   console.error('Failed to sync models:', err);
 });
 
