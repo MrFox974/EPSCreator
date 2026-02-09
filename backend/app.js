@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-// Trigger redeploy
+// Trigger redeploy (test)
 const express = require('express')
 const app = express()
 const { connectToDB, connectModels } = require('./config/database')
