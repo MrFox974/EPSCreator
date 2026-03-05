@@ -13,8 +13,8 @@ provider:
     DATABASE_HOST: aws-1-eu-west-1.pooler.supabase.com
     DATABASE_PORT: 6543
     PROTOCOLE: https
-    CORS_ORIGIN: https://main.d3oiure94jwg4o.amplifyapp.com
-    CLIENT_IP: main.d181l8v9krvus2.amplifyapp.com
+    CORS_ORIGIN: https://eps.lvlrise.com
+    CLIENT_IP: eps.lvlrise.com
     CLIENT_PORT: 5748
     SERVER_PORT: 8080
     SERVER_HOST: backend-production-2f14.up.railway.app
