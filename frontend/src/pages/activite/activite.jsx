@@ -506,12 +506,11 @@ function Activite() {
               </button>
             )}
             
-            {/* Séquences existantes */}
+            {/* Séquences existantes - deux liens : Références et Projet */}
             {sequences.map((seq) => (
-              <div 
+              <div
                 key={seq.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all cursor-pointer group overflow-hidden"
-                onClick={() => navigate(`/sequence/${seq.id}`)}
+                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all group overflow-hidden"
               >
                 <div className="h-2" style={{ backgroundColor: 'var(--activite-couleur)' }} />
                 <div className="p-5">
@@ -523,7 +522,7 @@ function Activite() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-800 group-hover:text-[var(--activite-couleur)] transition-colors">
+                        <h3 className="font-semibold text-slate-800">
                           {seq.titre || 'Projet de séquence'}
                         </h3>
                         {seq.periode && (
@@ -532,10 +531,7 @@ function Activite() {
                       </div>
                     </div>
                     <button
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setConfirmModal({ open: true, id: seq.id, name: seq.titre || 'ce projet', type: 'sequence' });
-                      }}
+                      onClick={() => setConfirmModal({ open: true, id: seq.id, name: seq.titre || 'ce projet', type: 'sequence' })}
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                       title="Supprimer"
                     >
@@ -544,17 +540,31 @@ function Activite() {
                       </svg>
                     </button>
                   </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-slate-400">
-                      {new Date(seq.created_at).toLocaleDateString('fr-FR')}
-                    </span>
-                    <span className="text-sm font-medium group-hover:translate-x-1 transition-transform flex items-center gap-1" style={{ color: 'var(--activite-couleur)' }}>
-                      Ouvrir
+                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={() => navigate(`/sequence/${seq.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 transition-colors text-sm font-medium"
+                      style={{ borderColor: 'var(--activite-couleur)', color: 'var(--activite-couleur)' }}
+                    >
+                      Références de la séquence
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/sequence/${seq.id}/projet`)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-white text-sm font-medium transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: 'var(--activite-couleur)' }}
+                    >
+                      Projet de séquence
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   </div>
+                  <span className="text-xs text-slate-400 mt-2 block">
+                    {new Date(seq.created_at).toLocaleDateString('fr-FR')}
+                  </span>
                 </div>
               </div>
             ))}

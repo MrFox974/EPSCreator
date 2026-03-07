@@ -8,6 +8,7 @@ const Dashboard = lazy(() => import('./pages/dashboard/dashboard'));
 const Activite = lazy(() => import('./pages/activite/activite'));
 const EpsLecon = lazy(() => import('./pages/eps-lecon/eps-lecon'));
 const Sequence = lazy(() => import('./pages/sequence/sequence'));
+const SequenceProjet = lazy(() => import('./pages/sequence/SequenceProjet'));
 const VMATimer = lazy(() => import('./pages/outils/VMATimer'));
 
 // Skeleton simple pour le dashboard
@@ -50,12 +51,21 @@ export const router = createBrowserRouter(
         }
       />
       
-      {/* Séquence EPS avec ID dynamique */}
+      {/* Séquence EPS - Références de la séquence */}
       <Route
         path="sequence/:id"
         element={
           <Suspense fallback={<DashboardSkeleton />}>
             <Sequence />
+          </Suspense>
+        }
+      />
+      {/* Projet de séquence - blocs L1, L2, ... */}
+      <Route
+        path="sequence/:id/projet"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <SequenceProjet />
           </Suspense>
         }
       />
