@@ -95,43 +95,43 @@ const generateLeconHTML = (fiche) => {
         body {
           font-family: Arial, sans-serif;
           margin: 0;
-          padding: 24px;
+          padding: 28px;
           background: white;
           color: #333;
-          font-size: 16px;
-          line-height: 1.35;
+          font-size: 20px;
+          line-height: 1.4;
         }
         .header {
           text-align: center;
-          margin-bottom: 20px;
+          margin-bottom: 22px;
         }
         .header h1 {
           color: #1e3a5f;
-          font-size: 44px;
+          font-size: 56px;
           margin: 0;
         }
         .bandeau {
           background: #1e3a5f;
           color: white;
-          padding: 16px;
+          padding: 18px;
           text-align: center;
           font-weight: bold;
-          margin-bottom: 20px;
-          font-size: 18px;
+          margin-bottom: 22px;
+          font-size: 22px;
         }
         .objet-enseignement {
           background: #d9d9d9;
-          padding: 16px;
-          margin-bottom: 20px;
-          font-size: 16px;
+          padding: 18px;
+          margin-bottom: 22px;
+          font-size: 20px;
         }
         .badges {
           background: #7a9bb8;
-          padding: 16px;
+          padding: 18px;
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-bottom: 20px;
+          gap: 12px;
+          margin-bottom: 22px;
         }
         .badge {
           display: flex;
@@ -139,65 +139,66 @@ const generateLeconHTML = (fiche) => {
         .badge-label {
           background: #1e3a5f;
           color: white;
-          padding: 8px 15px;
+          padding: 10px 16px;
           font-weight: bold;
-          font-size: 14px;
+          font-size: 16px;
         }
         .badge-value {
           background: white;
           color: #1e3a5f;
-          padding: 8px 15px;
-          font-size: 14px;
+          padding: 10px 16px;
+          font-size: 16px;
         }
         .section {
-          margin: 30px 0;
+          margin: 34px 0;
         }
         .section-title {
           color: #1e3a5f;
-          font-size: 28px;
+          font-size: 34px;
           font-weight: bold;
-          margin-bottom: 15px;
+          margin-bottom: 18px;
           text-align: center;
         }
         .card {
-          margin-bottom: 15px;
+          margin-bottom: 18px;
         }
         .card-header {
-          padding: 10px 15px;
+          padding: 12px 16px;
           color: white;
           font-weight: bold;
-          font-size: 16px;
+          font-size: 20px;
         }
         .card-body {
-          border: 2px solid;
+          border: 4px solid;
           border-top: none;
-          padding: 16px;
+          padding: 18px;
           background: white;
-          font-size: 16px;
+          font-size: 20px;
         }
         .situation-card {
-          border: 2px solid;
-          border-radius: 8px;
-          margin-bottom: 20px;
+          border: 4px solid;
+          border-radius: 10px;
+          margin-bottom: 22px;
           overflow: hidden;
         }
         .situation-header {
-          padding: 10px 15px;
+          padding: 12px 16px;
           color: white;
           font-weight: bold;
-          font-size: 16px;
+          font-size: 20px;
         }
         .situation-body {
-          padding: 16px;
+          padding: 18px;
           background: white;
+          font-size: 20px;
         }
         .situation-field {
-          margin-bottom: 10px;
+          margin-bottom: 12px;
         }
         .situation-field-label {
           font-weight: bold;
           color: #333;
-          margin-bottom: 5px;
+          margin-bottom: 6px;
         }
         .situation-field-value {
           color: #666;
