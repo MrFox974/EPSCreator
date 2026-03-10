@@ -25,9 +25,24 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
 });
 
 
+/**
+ * Ajoute les colonnes date si elles n'existent pas (migration automatique).
+ */
+const runDateColumnsMigration = async () => {
+  try {
+    await sequelize.query('ALTER TABLE activite_support ADD COLUMN IF NOT EXISTS date DATE');
+    await sequelize.query('ALTER TABLE fiche_eps ADD COLUMN IF NOT EXISTS date DATE');
+    await sequelize.query('ALTER TABLE sequence ADD COLUMN IF NOT EXISTS date DATE');
+    console.log('Migration colonnes date : OK');
+  } catch (error) {
+    console.error('Migration colonnes date (non bloquant):', error.message);
+  }
+};
+
 const connectToDB = async () => {
   try {
     await sequelize.authenticate();
+    await runDateColumnsMigration();
     console.log('Connexion établie avec succés.');
   } catch (error) {
     console.error('Impossible de se connecter à la base de données:', error);

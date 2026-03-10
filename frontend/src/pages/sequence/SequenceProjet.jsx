@@ -42,6 +42,8 @@ function SequenceProjet() {
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [tempDate, setTempDate] = useState('');
 
   const sequenceIdRef = useRef(id);
   const blocksRef = useRef(blocks);
@@ -98,6 +100,20 @@ function SequenceProjet() {
     saveTableau(next);
   }, [saveTableau]);
 
+  const saveDate = useCallback(async (value) => {
+    const currentId = sequenceIdRef.current;
+    if (!currentId) return;
+    setSaveStatus('saving');
+    try {
+      await updateSequence(currentId, { date: value || null });
+      setSequence((prev) => (prev ? { ...prev, date: value || null } : null));
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Erreur sauvegarde date:', error);
+      setSaveStatus('error');
+    }
+  }, []);
+
   const addBlock = useCallback(() => {
     const next = [...blocksRef.current, defaultBlock(blocksRef.current.length)];
     setBlocks(next);
@@ -151,6 +167,51 @@ function SequenceProjet() {
               {activite.classe?.nom ? ` - ${activite.classe.nom}` : ''}
             </p>
           )}
+          {/* Date éditable sous le titre - clic + icône calendrier */}
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {isEditingDate ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={tempDate}
+                  onChange={(e) => setTempDate(e.target.value)}
+                  onBlur={() => {
+                    saveDate(tempDate);
+                    setIsEditingDate(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveDate(tempDate);
+                      setIsEditingDate(false);
+                    }
+                    if (e.key === 'Escape') setIsEditingDate(false);
+                  }}
+                  className="border border-[#1e3a5f]/30 rounded-lg px-3 py-2 text-[#1e3a5f] text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/50"
+                  autoFocus
+                />
+                <span className="text-slate-500 text-xs">Entrée pour enregistrer</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setTempDate(sequence?.date || new Date().toISOString().slice(0, 10));
+                  setIsEditingDate(true);
+                }}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors text-[#1e3a5f] border border-transparent hover:border-[#1e3a5f]/20"
+                title="Cliquez pour modifier la date"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="font-medium">
+                  {sequence?.date
+                    ? new Date(sequence.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                    : 'Cliquez pour ajouter une date'}
+                </span>
+              </button>
+            )}
+          </div>
         </header>
 
         <div className="space-y-6">
@@ -169,12 +230,13 @@ function SequenceProjet() {
                   <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
                     Titre de la leçon
                   </label>
-                  <div className="bg-white rounded-lg p-2 border border-[#92d050]/40">
+                  <div className="rounded-lg p-2 bg-transparent">
                     <EditableField
                       value={block.titre}
-                      onChange={(val) => updateBlock(index, 'titre', val)}
+                      onChange={(_, val) => updateBlock(index, 'titre', val)}
                       fieldName={`titre-${index}`}
                       placeholder="L1 - [à compléter]"
+                      richText
                     />
                   </div>
                 </div>
@@ -182,10 +244,10 @@ function SequenceProjet() {
                   <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
                     Objectif
                   </label>
-                  <div className="bg-white rounded-lg p-2 border border-[#92d050]/40">
+                  <div className="rounded-lg p-2 bg-transparent">
                     <EditableField
                       value={block.objectif}
-                      onChange={(val) => updateBlock(index, 'objectif', val)}
+                      onChange={(_, val) => updateBlock(index, 'objectif', val)}
                       fieldName={`objectif-${index}`}
                       placeholder="Objectif de la leçon..."
                       multiline
@@ -196,10 +258,10 @@ function SequenceProjet() {
                   <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
                     QUOI (apprendre)
                   </label>
-                  <div className="bg-white rounded-lg p-2 border border-[#92d050]/40">
+                  <div className="rounded-lg p-2 bg-transparent">
                     <EditableField
                       value={block.quoi}
-                      onChange={(val) => updateBlock(index, 'quoi', val)}
+                      onChange={(_, val) => updateBlock(index, 'quoi', val)}
                       fieldName={`quoi-${index}`}
                       placeholder="Ce que les élèves apprennent..."
                       multiline
@@ -210,10 +272,10 @@ function SequenceProjet() {
                   <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
                     COMMENT
                   </label>
-                  <div className="bg-white rounded-lg p-2 border border-[#92d050]/40">
+                  <div className="rounded-lg p-2 bg-transparent">
                     <EditableField
                       value={block.comment}
-                      onChange={(val) => updateBlock(index, 'comment', val)}
+                      onChange={(_, val) => updateBlock(index, 'comment', val)}
                       fieldName={`comment-${index}`}
                       placeholder="Comment (situation, consigne...)"
                       multiline

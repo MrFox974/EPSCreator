@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import RichTextEditor from './RichTextEditor';
 
 /**
- * EditableField - Composant pour éditer du texte en double-cliquant
+ * EditableField - Composant pour éditer du texte au clic (ou double-clic)
  * Utilise un éditeur riche pour les champs multilignes
  */
 function EditableField({ 
@@ -11,7 +11,11 @@ function EditableField({
   className = '', 
   fieldName,
   multiline = false,
-  placeholder = 'Double-cliquez pour éditer...'
+  placeholder = 'Cliquez pour éditer...',
+  placeholderClassName = 'text-gray-400 italic',
+  editOn = 'click', // 'click' | 'doubleClick'
+  displayVariant = 'plain', // 'plain' | 'hover'
+  richText = false, // force l'éditeur riche même en single-line
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value || '');
@@ -55,10 +59,18 @@ function EditableField({
     };
   }, [isEditing, localValue, value, fieldName, onChange]);
 
-  const handleDoubleClick = useCallback(() => {
+  const openEditor = useCallback(() => {
     setLocalValue(value || '');
     setIsEditing(true);
   }, [value]);
+
+  const handleClick = useCallback(() => {
+    if (editOn === 'click') openEditor();
+  }, [editOn, openEditor]);
+
+  const handleDoubleClick = useCallback(() => {
+    if (editOn === 'doubleClick') openEditor();
+  }, [editOn, openEditor]);
 
   // Mise à jour locale pour input simple
   const handleInputChange = useCallback((e) => {
@@ -93,7 +105,7 @@ function EditableField({
 
   // Mode édition
   if (isEditing) {
-    if (multiline) {
+    if (multiline || richText) {
       // Éditeur riche pour multiline
       return (
         <div ref={containerRef} className="relative">
@@ -138,10 +150,10 @@ function EditableField({
   // Fonction pour afficher le HTML en texte
   const renderContent = () => {
     if (!hasContent) {
-      return <span className="text-gray-400 italic">{placeholder}</span>;
+      return <span className={placeholderClassName}>{placeholder}</span>;
     }
 
-    if (multiline) {
+    if (multiline || richText) {
       // Afficher le HTML rendu avec les styles pour listes et formatage
       return (
         <div 
@@ -157,9 +169,19 @@ function EditableField({
   return (
     <div 
       ref={containerRef}
+      onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      className={`cursor-pointer hover:bg-blue-50/50 transition-colors rounded px-1 -mx-1 min-h-[1.5em] ${className}`}
-      title="Double-cliquez pour éditer"
+      className={[
+        'min-h-[1.5em]',
+        'rounded',
+        'px-1',
+        '-mx-1',
+        'transition-colors',
+        'cursor-text',
+        displayVariant === 'hover' ? 'hover:bg-blue-50/50' : '',
+        className,
+      ].filter(Boolean).join(' ')}
+      title={editOn === 'doubleClick' ? 'Double-cliquez pour éditer' : 'Cliquez pour éditer'}
     >
       {renderContent()}
     </div>

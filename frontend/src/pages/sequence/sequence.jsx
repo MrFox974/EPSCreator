@@ -11,6 +11,7 @@ import { getActiviteById } from '../../../utils/activite.api';
 
 const defaultSequenceData = {
   titre: 'Projet de séquence',
+  date: null,
   periode: '',
   socle_commun: '[]',
   projet_etablissement: '',
@@ -36,6 +37,8 @@ function Sequence() {
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [tempDate, setTempDate] = useState('');
 
   const sequenceRef = useRef(sequence);
   const sequenceIdRef = useRef(id);
@@ -175,6 +178,51 @@ function Sequence() {
             </h1>
             <div className="flex-1 h-[4px] bg-[#1e3a5f]"></div>
           </div>
+          {/* Date éditable sous le titre - clic + icône calendrier */}
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {isEditingDate ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={tempDate}
+                  onChange={(e) => setTempDate(e.target.value)}
+                  onBlur={() => {
+                    handleFieldChange('date', tempDate || null);
+                    setIsEditingDate(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleFieldChange('date', tempDate || null);
+                      setIsEditingDate(false);
+                    }
+                    if (e.key === 'Escape') setIsEditingDate(false);
+                  }}
+                  className="border border-[#1e3a5f]/30 rounded-lg px-3 py-2 text-[#1e3a5f] text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/50"
+                  autoFocus
+                />
+                <span className="text-slate-500 text-xs">Entrée pour enregistrer</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setTempDate(sequence.date || new Date().toISOString().slice(0, 10));
+                  setIsEditingDate(true);
+                }}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors text-[#1e3a5f] border border-transparent hover:border-[#1e3a5f]/20"
+                title="Cliquez pour modifier la date"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="font-medium">
+                  {sequence.date
+                    ? new Date(sequence.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                    : 'Cliquez pour ajouter une date'}
+                </span>
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Bandeau bleu foncé - contexte (activité / classe) */}
@@ -207,11 +255,14 @@ function Sequence() {
               <div className="space-y-2">
                 {socleCommun.map((domaine, index) => (
                   <div key={index} className="flex items-start gap-2 group">
-                    <div className="flex-1 bg-white rounded-lg p-2 border border-[#92d050]/30">
+                    <div className="flex-1 bg-[#a6db6a] text-white rounded-lg p-2 border border-[#92d050]/40">
                       <EditableField
                         value={domaine}
                         onChange={(val) => handleListItemChange('socle_commun', index, val)}
                         placeholder="Ex: D1.4 : Les langages des arts et du corps"
+                        placeholderClassName="text-white/80 italic"
+                        className="text-white"
+                        multiline
                       />
                     </div>
                     <button
@@ -250,13 +301,13 @@ function Sequence() {
             </div>
             <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md space-y-4">
               <div>
-                <span className="text-[#333] font-medium block mb-1">Axe prioritaire :</span>
+                <span className="text-[#92d050] font-semibold block mb-1">Axe prioritaire :</span>
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="projet_eps_axe_prioritaire" placeholder="Ex: Faire réussir tous les élèves" />
                 </div>
               </div>
               <div>
-                <span className="text-[#333] font-medium block mb-1">Axe secondaire :</span>
+                <span className="text-[#92d050] font-semibold block mb-1">Axe secondaire :</span>
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="projet_eps_axe_secondaire" placeholder="Ex: Faire vivre aux élèves une culture commune" />
                 </div>
@@ -312,19 +363,19 @@ function Sequence() {
             </div>
             <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md space-y-4">
               <div>
-                <span className="text-[#333] font-medium block mb-1">Moteur :</span>
+                <span className="text-red-600 font-semibold block mb-1">Moteur :</span>
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="projet_classe_moteur" placeholder="Ex: Passage d'une motricité non-réactive à une motricité DYNAMIQUE, REACTIVE et PLANIFIEE" />
                 </div>
               </div>
               <div>
-                <span className="text-[#333] font-medium block mb-1">Méthodologique :</span>
+                <span className="text-[#92d050] font-semibold block mb-1">Méthodologique :</span>
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="projet_classe_methodologique" placeholder="Ex: Développement de la PRISE D'INFORMATION..." />
                 </div>
               </div>
               <div>
-                <span className="text-[#333] font-medium block mb-1">Sociale :</span>
+                <span className="text-blue-600 font-semibold block mb-1">Sociale :</span>
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="projet_classe_sociale" placeholder="Ex: Passage de l'attentisme à l'ENGAGEMENT COLLECTIF..." />
                 </div>

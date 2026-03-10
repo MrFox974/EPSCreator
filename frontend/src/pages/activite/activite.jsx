@@ -2,7 +2,7 @@
  * Page Activité Support - Affiche les leçons d'une activité
  * Avec drag and drop pour réorganiser
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -22,7 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { getActiviteById } from '../../../utils/activite.api';
+import { getActiviteById, updateActivite } from '../../../utils/activite.api';
 import { createFiche, deleteFiche, reorderFiches, getFicheById } from '../../../utils/fiche-eps.api';
 import { getSequencesByActivite, createSequence, deleteSequence } from '../../../utils/sequence.api';
 import { generateLeconPDFFromData } from '../../../utils/pdf-generator';
@@ -111,6 +111,14 @@ function SortableLeconCard({ lecon, activite, isReordering, onDelete, onClick, o
               <p className="text-slate-400 text-sm">
                 Leçon {lecon.lecon_numero || '-'}
               </p>
+              {lecon.date && (
+                <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {new Date(lecon.date + 'T12:00:00').toLocaleDateString('fr-FR')}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -170,6 +178,10 @@ function Activite() {
   // Modals
   const [leconModal, setLeconModal] = useState({ open: false });
   const [confirmModal, setConfirmModal] = useState({ open: false, id: null, name: '', type: 'lecon' });
+
+  // Date éditable sous le titre (double-clic)
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [tempDate, setTempDate] = useState('');
   
   // Formulaire
   const [leconForm, setLeconForm] = useState({ titre: 'Nouvelle leçon EPS', lecon_numero: '' });
@@ -240,6 +252,29 @@ function Activite() {
       setSaving(false);
     }
   };
+
+  // Sauvegarder la date (après édition double-clic)
+  const handleSaveDate = useCallback(async () => {
+    if (!activite?.id) {
+      setIsEditingDate(false);
+      return;
+    }
+    try {
+      const value = tempDate || null;
+      await updateActivite(activite.id, { date: value });
+      setActivite((prev) => (prev ? { ...prev, date: value } : null));
+    } catch (error) {
+      console.error('Erreur sauvegarde date:', error);
+    }
+    setIsEditingDate(false);
+  }, [activite, tempDate]);
+
+  // Ouvrir l'édition de la date (double-clic)
+  const handleDateDoubleClick = useCallback(() => {
+    const value = activite?.date || new Date().toISOString().slice(0, 10);
+    setTempDate(value);
+    setIsEditingDate(true);
+  }, [activite?.date]);
 
   // Annuler la réorganisation
   const handleCancelReorder = () => {
@@ -383,6 +418,43 @@ function Activite() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">{activite.nom}</h1>
+              {/* Date éditable au clic (sous le titre principal) */}
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                {isEditingDate ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={tempDate}
+                      onChange={(e) => setTempDate(e.target.value)}
+                      onBlur={handleSaveDate}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveDate();
+                        if (e.key === 'Escape') setIsEditingDate(false);
+                      }}
+                      className="bg-white/20 text-white rounded-lg px-3 py-2 text-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                      autoFocus
+                    />
+                    <span className="text-white/70 text-xs">Entrée pour enregistrer, Échap pour annuler</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleDateDoubleClick}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/15 transition-colors text-left border border-transparent hover:border-white/30"
+                    title="Cliquez pour modifier la date"
+                  >
+                    <svg className="w-5 h-5 text-white/90 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-white font-medium">
+                      {activite.date
+                        ? new Date(activite.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                        : 'Aucune date'}
+                    </span>
+                    <span className="text-white/70 text-sm">(cliquez pour modifier)</span>
+                  </button>
+                )}
+              </div>
               {activite.champ_apprentissage && (
                 <p className="text-white/80 mt-1">{activite.champ_apprentissage}</p>
               )}
@@ -487,15 +559,15 @@ function Activite() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-6">
-        {/* Section Séquence - couleur de l'activité */}
+        {/* Section Gestionnaire de projets - blocs Références et Projet de séquence */}
         <div className="mb-8" style={{ ['--activite-couleur']: activite?.couleur || '#5dade2' }}>
-          <h2 className="text-lg font-semibold text-slate-700 mb-4">Projet de séquence</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Carte pour créer une séquence */}
+          <h2 className="text-lg font-semibold text-slate-700 mb-4">Gestionnaire de projets</h2>
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            {/* Carte pour créer une séquence (occupe 2 colonnes quand vide) */}
             {sequences.length === 0 && (
               <button
                 onClick={handleCreateSequence}
-                className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-2xl p-6 hover:bg-slate-50 hover:border-slate-400 transition-all group min-h-[140px] flex flex-col items-center justify-center"
+                className="col-span-2 bg-slate-100 border-2 border-dashed border-slate-300 rounded-2xl p-6 hover:bg-slate-50 hover:border-slate-400 transition-all group min-h-[140px] flex flex-col items-center justify-center"
               >
                 <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center mb-3 group-hover:!bg-[var(--activite-couleur)] group-hover:text-white transition-all">
                   <svg className="w-6 h-6 text-slate-400 group-hover:text-white transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -505,68 +577,89 @@ function Activite() {
                 <span className="text-slate-500 font-medium group-hover:text-[var(--activite-couleur)] transition-colors">Créer un projet de séquence</span>
               </button>
             )}
-            
-            {/* Séquences existantes - deux liens : Références et Projet */}
+
+            {/* Séquences : deux blocs côte à côte (Références | Projet - activité) */}
             {sequences.map((seq) => (
-              <div
-                key={seq.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all group overflow-hidden"
-              >
-                <div className="h-2" style={{ backgroundColor: 'var(--activite-couleur)' }} />
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: 'var(--activite-couleur)' }}>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">
-                          {seq.titre || 'Projet de séquence'}
-                        </h3>
-                        {seq.periode && (
-                          <p className="text-slate-400 text-sm">{seq.periode}</p>
-                        )}
-                      </div>
+              <Fragment key={seq.id}>
+                {/* Bloc Références de la séquence - cliquable (même structure que Projet : barre en haut) */}
+                <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all group overflow-hidden">
+                  <div className="h-2" style={{ backgroundColor: 'var(--activite-couleur)' }} />
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/sequence/${seq.id}`)}
+                    className="w-full p-5 flex items-center gap-3 text-left cursor-pointer border-0 bg-transparent"
+                  >
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: 'var(--activite-couleur)' }}>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
                     </div>
-                    <button
-                      onClick={() => setConfirmModal({ open: true, id: seq.id, name: seq.titre || 'ce projet', type: 'sequence' })}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      title="Supprimer"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-slate-800">Références de la séquence</h3>
+                      <p className="text-slate-500 text-sm truncate">{seq.titre || 'Projet de séquence'}</p>
+                      {seq.date && (
+                        <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {new Date(seq.date + 'T12:00:00').toLocaleDateString('fr-FR')}
+                        </p>
+                      )}
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-[var(--activite-couleur)] transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Bloc Projet de séquence - activité - cliquable */}
+                <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all group overflow-hidden relative">
+                  <div className="h-2" style={{ backgroundColor: 'var(--activite-couleur)' }} />
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/sequence/${seq.id}/projet`)}
+                    className="w-full p-5 flex items-center gap-3 text-left cursor-pointer border-0 bg-transparent"
+                  >
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0" style={{ backgroundColor: 'var(--activite-couleur)' }}>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                    </button>
-                  </div>
-                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <button
-                      onClick={() => navigate(`/sequence/${seq.id}`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 transition-colors text-sm font-medium"
-                      style={{ borderColor: 'var(--activite-couleur)', color: 'var(--activite-couleur)' }}
-                    >
-                      Références de la séquence
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => navigate(`/sequence/${seq.id}/projet`)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-white text-sm font-medium transition-opacity hover:opacity-90"
-                      style={{ backgroundColor: 'var(--activite-couleur)' }}
-                    >
-                      Projet de séquence
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-                  <span className="text-xs text-slate-400 mt-2 block">
-                    {new Date(seq.created_at).toLocaleDateString('fr-FR')}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-slate-800">Projet de séquence - {activite?.nom || 'activité'}</h3>
+                      <p className="text-slate-500 text-sm truncate">{seq.titre || 'Projet de séquence'}</p>
+                      {seq.periode && (
+                        <p className="text-slate-400 text-xs mt-0.5">{seq.periode}</p>
+                      )}
+                      {seq.date && (
+                        <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {new Date(seq.date + 'T12:00:00').toLocaleDateString('fr-FR')}
+                        </p>
+                      )}
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-[var(--activite-couleur)] transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmModal({ open: true, id: seq.id, name: seq.titre || 'ce projet', type: 'sequence' }); }}
+                    className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Supprimer"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  <span className="text-xs text-slate-400 block px-5 pb-3">
+                    {seq.date
+                      ? new Date(seq.date + 'T12:00:00').toLocaleDateString('fr-FR')
+                      : new Date(seq.created_at).toLocaleDateString('fr-FR')}
                   </span>
                 </div>
-              </div>
+              </Fragment>
             ))}
           </div>
         </div>

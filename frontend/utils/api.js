@@ -7,9 +7,11 @@ let host = (import.meta.env.VITE_SERVER_HOST || 'localhost').replace(/\/+$/, '')
 // Enlève le protocole si présent dans le host (ex: https://example.com → example.com)
 host = host.replace(/^https?:\/\//, '');
 
-// En prod (Lambda Function URL), VITE_SERVER_PORT n'est pas défini → pas de port dans l'URL
-// En local, VITE_SERVER_PORT=8080 → on ajoute le port
-const port = import.meta.env.VITE_SERVER_PORT;
+// En prod (Lambda Function URL), VITE_SERVER_PORT peut rester vide.
+// En local, si .env est absent, on force 8080 pour localhost.
+const envPort = import.meta.env.VITE_SERVER_PORT;
+const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+const port = !envPort && isLocalHost ? '8080' : envPort;
 
 let baseURL;
 

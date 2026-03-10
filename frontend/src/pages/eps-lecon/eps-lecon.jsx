@@ -24,6 +24,7 @@ const emptySituation = {
 // Données par défaut pour une nouvelle fiche (avec placeholders)
 const defaultFicheData = {
   titre: 'Préparation leçon EPS',
+  date: null,
   bandeau_titre: '',
   objet_enseignement: '',
   lecon_numero: '',
@@ -47,6 +48,13 @@ const defaultFicheData = {
   situations_echauffement: JSON.stringify([{ ...emptySituation }]),
   situations_apprentissage: JSON.stringify([{ ...emptySituation }]),
   situations_finale: JSON.stringify([{ ...emptySituation }]),
+  rangement_bilan: JSON.stringify({
+    analyse_reflexive: '',
+  }),
+};
+
+const defaultRangementBilan = {
+  analyse_reflexive: '',
 };
 
 function EpsLecon() {
@@ -82,19 +90,36 @@ function EpsLecon() {
     index: null
   });
 
+  // Date éditable sous le titre (clic pour modifier)
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [tempDate, setTempDate] = useState('');
+
   // Parse les situations depuis JSON (utilise la ref pour avoir la valeur à jour)
   const getSituations = useCallback((type, ficheData = null) => {
     const currentFiche = ficheData || ficheRef.current;
     const key = `situations_${type}`;
     try {
       const parsed = JSON.parse(currentFiche[key] || '[]');
-      // Retourner au moins une situation vide si le tableau est vide
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
-      return [{ ...emptySituation }];
+      return [];
     } catch {
-      return [{ ...emptySituation }];
+      return [];
+    }
+  }, []);
+
+  // Parse les données de rangement + bilan (JSON)
+  const getRangementBilan = useCallback((ficheData = null) => {
+    const currentFiche = ficheData || ficheRef.current;
+    try {
+      const parsed = JSON.parse(currentFiche.rangement_bilan || '{}');
+      return {
+        ...defaultRangementBilan,
+        ...(parsed && typeof parsed === 'object' ? parsed : {}),
+      };
+    } catch {
+      return { ...defaultRangementBilan };
     }
   }, []);
 
@@ -120,7 +145,16 @@ function EpsLecon() {
           // S'assurer que les situations ont des valeurs valides
           ['situations_echauffement', 'situations_apprentissage', 'situations_finale'].forEach(key => {
             if (!mergedFiche[key] || mergedFiche[key] === 'null') {
-              mergedFiche[key] = defaultFicheData[key];
+              mergedFiche[key] = '[]';
+            } else {
+              try {
+                const parsedSituations = JSON.parse(mergedFiche[key]);
+                if (!Array.isArray(parsedSituations)) {
+                  mergedFiche[key] = '[]';
+                }
+              } catch {
+                mergedFiche[key] = '[]';
+              }
             }
           });
           
@@ -180,6 +214,25 @@ function EpsLecon() {
     await saveFiche(newFiche);
   }, [getSituations, saveFiche]);
 
+  // Gérer le changement d'un champ de la section rangement + bilan (JSON)
+  const handleRangementBilanFieldChange = useCallback(async (fieldName, value) => {
+    const currentFiche = ficheRef.current;
+    const currentRangementBilan = getRangementBilan(currentFiche);
+    const updatedRangementBilan = {
+      ...currentRangementBilan,
+      [fieldName]: value,
+    };
+
+    const newFiche = {
+      ...currentFiche,
+      rangement_bilan: JSON.stringify(updatedRangementBilan),
+    };
+
+    setFiche(newFiche);
+    ficheRef.current = newFiche;
+    await saveFiche(newFiche);
+  }, [getRangementBilan, saveFiche]);
+
   // Ajouter une situation
   const handleAddSituation = useCallback(async (type) => {
     const currentFiche = ficheRef.current;
@@ -204,9 +257,8 @@ function EpsLecon() {
     const { type, index } = confirmModal;
     const currentFiche = ficheRef.current;
     const situations = getSituations(type, currentFiche);
-    
-    // Ne pas supprimer si c'est la dernière situation
-    if (situations.length <= 1) {
+
+    if (index === null || index < 0 || index >= situations.length) {
       setConfirmModal({ isOpen: false, type: null, index: null });
       return;
     }
@@ -289,6 +341,7 @@ function EpsLecon() {
   const situationsEchauffement = getSituations('echauffement');
   const situationsApprentissage = getSituations('apprentissage');
   const situationsFinale = getSituations('finale');
+  const rangementBilan = getRangementBilan();
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
@@ -334,6 +387,51 @@ function EpsLecon() {
               <SimpleEditable fieldName="titre" />
             </h1>
             <div className="flex-1 h-[4px] bg-[#1e3a5f]"></div>
+          </div>
+          {/* Date éditable sous le titre - clic + icône calendrier */}
+          <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {isEditingDate ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={tempDate}
+                  onChange={(e) => setTempDate(e.target.value)}
+                  onBlur={() => {
+                    handleFieldChange('date', tempDate || null);
+                    setIsEditingDate(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleFieldChange('date', tempDate || null);
+                      setIsEditingDate(false);
+                    }
+                    if (e.key === 'Escape') setIsEditingDate(false);
+                  }}
+                  className="border border-[#1e3a5f]/30 rounded-lg px-3 py-2 text-[#1e3a5f] text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/50"
+                  autoFocus
+                />
+                <span className="text-slate-500 text-xs">Entrée pour enregistrer</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setTempDate(fiche.date || new Date().toISOString().slice(0, 10));
+                  setIsEditingDate(true);
+                }}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 transition-colors text-[#1e3a5f] border border-transparent hover:border-[#1e3a5f]/20"
+                title="Cliquez pour modifier la date"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="font-medium">
+                  {fiche.date
+                    ? new Date(fiche.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                    : 'Cliquez pour ajouter une date'}
+                </span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -656,9 +754,14 @@ function EpsLecon() {
                   handleSituationFieldChange('echauffement', idx, fieldName, value)
                 }
                 onDelete={(idx) => handleRequestDelete('echauffement', idx)}
-                canDelete={situationsEchauffement.length > 1}
+                canDelete={true}
               />
             ))}
+            {situationsEchauffement.length === 0 && (
+              <p className="text-gray-500 italic border border-dashed border-gray-300 rounded-md px-4 py-3 bg-gray-50">
+                Pas d'échauffement.
+              </p>
+            )}
           </div>
 
           {/* ========== Situations d'apprentissages ========== */}
@@ -676,9 +779,14 @@ function EpsLecon() {
                   handleSituationFieldChange('apprentissage', idx, fieldName, value)
                 }
                 onDelete={(idx) => handleRequestDelete('apprentissage', idx)}
-                canDelete={situationsApprentissage.length > 1}
+                canDelete={true}
               />
             ))}
+            {situationsApprentissage.length === 0 && (
+              <p className="text-gray-500 italic border border-dashed border-gray-300 rounded-md px-4 py-3 bg-gray-50">
+                Pas de situation d'apprentissage.
+              </p>
+            )}
           </div>
 
           {/* ========== Situations finale ========== */}
@@ -696,9 +804,14 @@ function EpsLecon() {
                   handleSituationFieldChange('finale', idx, fieldName, value)
                 }
                 onDelete={(idx) => handleRequestDelete('finale', idx)}
-                canDelete={situationsFinale.length > 1}
+                canDelete={true}
               />
             ))}
+            {situationsFinale.length === 0 && (
+              <p className="text-gray-500 italic border border-dashed border-gray-300 rounded-md px-4 py-3 bg-gray-50">
+                Pas de situation finale.
+              </p>
+            )}
           </div>
 
         </div>
@@ -745,6 +858,30 @@ function EpsLecon() {
               </div>
             </div>
 
+          </div>
+        </div>
+
+        {/* ========== SECTION 5 : ANALYSE REFLEXIVE ========== */}
+        <div className="mt-12 px-6 pb-12">
+          <div className="flex items-center justify-center gap-6 mb-8">
+            <div className="flex-1 h-[3px] bg-[#1e3a5f]"></div>
+            <h2 className="text-[#1e3a5f] text-2xl md:text-3xl font-bold whitespace-nowrap">
+              ANALYSE REFLEXIVE
+            </h2>
+            <div className="flex-1 h-[3px] bg-[#1e3a5f]"></div>
+          </div>
+
+          <div className="bg-[#f2994a] px-4 py-3 rounded-t-md">
+            <h4 className="text-white font-semibold text-lg">Analyse réflexive</h4>
+          </div>
+          <div className="bg-white border-2 border-[#f2994a] border-t-0 p-4 rounded-b-md min-h-[180px]">
+            <EditableField
+              value={rangementBilan.analyse_reflexive}
+              onChange={(_, value) => handleRangementBilanFieldChange('analyse_reflexive', value)}
+              fieldName="analyse_reflexive"
+              multiline={true}
+              className="text-[#333] text-base"
+            />
           </div>
         </div>
 

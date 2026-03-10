@@ -26,6 +26,10 @@ const ActiviteSupport = sequelize.define(
       allowNull: true,
       defaultValue: '#5dade2',
     },
+    date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     classe_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

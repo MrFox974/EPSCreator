@@ -33,7 +33,7 @@ exports.getById = async (req, res) => {
         {
           model: FicheEPS,
           as: 'lecons',
-          attributes: ['id', 'titre', 'lecon_numero', 'ordre', 'created_at'],
+          attributes: ['id', 'titre', 'lecon_numero', 'ordre', 'date', 'created_at'],
           order: [['ordre', 'ASC'], ['created_at', 'ASC']]
         },
         {

@@ -30,6 +30,10 @@ const FicheEPS = sequelize.define(
       allowNull: false,
       defaultValue: 'Préparation leçon EPS',
     },
+    date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     bandeau_titre: {
       type: DataTypes.TEXT,
       allowNull: false,

@@ -123,15 +123,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialise la connexion DB (non-bloquant pour Lambda)
-connectToDB().catch(err => {
-  console.error('Failed to connect to database:', err);
-});
-
-// sync() sans options crée les tables manquantes sans supprimer les données existantes
-// alter: true modifie les tables existantes mais ne crée pas celles qui manquent
-connectModels({}).catch(err => {
-  console.error('Failed to sync models:', err);
-});
+// Initialise la connexion DB puis migration (colonnes date) puis sync des modèles
+connectToDB()
+  .then(() => connectModels({}))
+  .catch(err => {
+    console.error('Failed to connect or sync database:', err);
+  });
 
 module.exports = app

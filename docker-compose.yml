@@ -3,12 +3,12 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: starter-postgres
+    container_name: eps-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: starter_db_new
+      POSTGRES_DB: starter_db
     ports:
       - "5432:5432"
     volumes:

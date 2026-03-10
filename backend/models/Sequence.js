@@ -30,6 +30,10 @@ const Sequence = sequelize.define('sequence', {
     allowNull: true,
     defaultValue: '',
   },
+  date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
   // Socle commun (JSON array de domaines)
   socle_commun: {
     type: DataTypes.TEXT,
