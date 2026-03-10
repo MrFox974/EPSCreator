@@ -424,12 +424,17 @@ const generateLeconHTML = (fiche) => {
  */
 export const generateLeconPDFFromData = async (fiche, filename = 'lecon') => {
   try {
+    const pageWidthMm = 210;
+    const marginMm = 10;
+    const contentWidthMm = pageWidthMm - marginMm * 2; // 190mm
+    const zoomFactor = 1.3; // +30% comme demandé (plus grand, plus de hauteur/pages)
+
     // Créer un iframe temporaire pour isoler le HTML
     const iframe = document.createElement('iframe');
     iframe.style.position = 'absolute';
     iframe.style.left = '-9999px';
-    // Capturer à la largeur "contenu" (A4 - marges) pour un rendu moins petit dans le PDF
-    iframe.style.width = '190mm';
+    // Capture plus "étroite" puis étirement à la largeur contenu -> zoom visuel (~+30%)
+    iframe.style.width = `${contentWidthMm / zoomFactor}mm`;
     iframe.style.height = '297mm';
     iframe.style.border = 'none';
     document.body.appendChild(iframe);
