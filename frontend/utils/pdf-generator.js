@@ -95,9 +95,11 @@ const generateLeconHTML = (fiche) => {
         body {
           font-family: Arial, sans-serif;
           margin: 0;
-          padding: 20px;
+          padding: 24px;
           background: white;
           color: #333;
+          font-size: 16px;
+          line-height: 1.35;
         }
         .header {
           text-align: center;
@@ -105,25 +107,27 @@ const generateLeconHTML = (fiche) => {
         }
         .header h1 {
           color: #1e3a5f;
-          font-size: 36px;
+          font-size: 44px;
           margin: 0;
         }
         .bandeau {
           background: #1e3a5f;
           color: white;
-          padding: 15px;
+          padding: 16px;
           text-align: center;
           font-weight: bold;
           margin-bottom: 20px;
+          font-size: 18px;
         }
         .objet-enseignement {
           background: #d9d9d9;
-          padding: 15px;
+          padding: 16px;
           margin-bottom: 20px;
+          font-size: 16px;
         }
         .badges {
           background: #7a9bb8;
-          padding: 15px;
+          padding: 16px;
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
@@ -137,18 +141,20 @@ const generateLeconHTML = (fiche) => {
           color: white;
           padding: 8px 15px;
           font-weight: bold;
+          font-size: 14px;
         }
         .badge-value {
           background: white;
           color: #1e3a5f;
           padding: 8px 15px;
+          font-size: 14px;
         }
         .section {
           margin: 30px 0;
         }
         .section-title {
           color: #1e3a5f;
-          font-size: 24px;
+          font-size: 28px;
           font-weight: bold;
           margin-bottom: 15px;
           text-align: center;
@@ -160,12 +166,14 @@ const generateLeconHTML = (fiche) => {
           padding: 10px 15px;
           color: white;
           font-weight: bold;
+          font-size: 16px;
         }
         .card-body {
           border: 2px solid;
           border-top: none;
-          padding: 15px;
+          padding: 16px;
           background: white;
+          font-size: 16px;
         }
         .situation-card {
           border: 2px solid;
@@ -177,9 +185,10 @@ const generateLeconHTML = (fiche) => {
           padding: 10px 15px;
           color: white;
           font-weight: bold;
+          font-size: 16px;
         }
         .situation-body {
-          padding: 15px;
+          padding: 16px;
           background: white;
         }
         .situation-field {
@@ -418,7 +427,8 @@ export const generateLeconPDFFromData = async (fiche, filename = 'lecon') => {
     const iframe = document.createElement('iframe');
     iframe.style.position = 'absolute';
     iframe.style.left = '-9999px';
-    iframe.style.width = '210mm';
+    // Capturer à la largeur "contenu" (A4 - marges) pour un rendu moins petit dans le PDF
+    iframe.style.width = '190mm';
     iframe.style.height = '297mm';
     iframe.style.border = 'none';
     document.body.appendChild(iframe);
