@@ -20,21 +20,40 @@ export const generateLeconPDF = async (element, filename = 'lecon') => {
 
     const imgData = canvas.toDataURL('image/png');
     
-    // Calculer les dimensions du PDF
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const pdfWidth = 210; // Largeur A4 en mm
-    const pdfHeight = (imgHeight * pdfWidth) / imgWidth; // Hauteur proportionnelle
-    
-    // Créer le PDF
+    // A4 avec marges pour éviter l'effet "étiré"
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 10; // mm
+
+    const contentWidth = pageWidth - margin * 2;
+    const contentHeight = pageHeight - margin * 2;
+
+    // Image dimensions in mm when fitted to contentWidth
+    const imgHeightMm = (canvas.height * contentWidth) / canvas.width;
+
     const pdf = new jsPDF({
-      orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+      orientation: 'portrait',
       unit: 'mm',
-      format: [pdfWidth, pdfHeight],
+      format: 'a4',
     });
-    
-    // Ajouter l'image au PDF
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+    // Multi-page: we draw the same tall image with a negative y offset.
+    let offsetY = 0;
+    while (offsetY < imgHeightMm - 0.01) {
+      pdf.addImage(
+        imgData,
+        'PNG',
+        margin,
+        margin - offsetY,
+        contentWidth,
+        imgHeightMm
+      );
+
+      offsetY += contentHeight;
+      if (offsetY < imgHeightMm - 0.01) {
+        pdf.addPage();
+      }
+    }
     
     // Télécharger le PDF
     pdf.save(`${filename}.pdf`);

@@ -227,7 +227,7 @@ function SequenceProjet() {
               </div>
               <div className="p-4 space-y-4 bg-[#e8f5e0]/30 border-t-0 border-2 border-[#92d050] border-t-0">
                 <div>
-                  <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
+                  <label className="block text-sm font-semibold text-[#92d050] mb-1">
                     Titre de la leçon
                   </label>
                   <div className="rounded-lg p-2 bg-transparent">
@@ -241,7 +241,7 @@ function SequenceProjet() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
+                  <label className="block text-sm font-semibold text-[#92d050] mb-1">
                     Objectif
                   </label>
                   <div className="rounded-lg p-2 bg-transparent">
@@ -255,7 +255,7 @@ function SequenceProjet() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
+                  <label className="block text-sm font-semibold text-[#92d050] mb-1">
                     QUOI (apprendre)
                   </label>
                   <div className="rounded-lg p-2 bg-transparent">
@@ -269,7 +269,7 @@ function SequenceProjet() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#1e3a5f] mb-1">
+                  <label className="block text-sm font-semibold text-[#92d050] mb-1">
                     COMMENT
                   </label>
                   <div className="rounded-lg p-2 bg-transparent">
