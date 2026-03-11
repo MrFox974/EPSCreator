@@ -64,3 +64,25 @@ export const deleteSequence = async (id) => {
     throw error;
   }
 };
+
+export const downloadSequenceReferencesPdf = async (id) => {
+  try {
+    return await api.get(`/api/sequences/${id}/pdf/references`, {
+      responseType: 'blob',
+    });
+  } catch (error) {
+    console.error('Erreur lors du téléchargement PDF (références):', error);
+    throw error;
+  }
+};
+
+export const downloadSequenceProjetPdf = async (id) => {
+  try {
+    return await api.get(`/api/sequences/${id}/pdf/projet`, {
+      responseType: 'blob',
+    });
+  } catch (error) {
+    console.error('Erreur lors du téléchargement PDF (projet):', error);
+    throw error;
+  }
+};

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import EditableField from '../../components/EditableField';
 import SavePopup from '../../components/SavePopup';
-import { getSequenceById, updateSequence } from '../../../utils/sequence.api';
+import { downloadSequenceProjetPdf, getSequenceById, updateSequence } from '../../../utils/sequence.api';
 import { getActiviteById } from '../../../utils/activite.api';
 
 const defaultBlock = (index) => ({
@@ -44,6 +44,7 @@ function SequenceProjet() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [tempDate, setTempDate] = useState('');
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const sequenceIdRef = useRef(id);
   const blocksRef = useRef(blocks);
@@ -114,6 +115,28 @@ function SequenceProjet() {
     }
   }, []);
 
+  const handleDownloadPdf = useCallback(async () => {
+    try {
+      if (!id) return;
+      setDownloadingPdf(true);
+      const response = await downloadSequenceProjetPdf(id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `projet_sequence_${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF projet:', error);
+      alert('Erreur lors du téléchargement du PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [id]);
+
   const addBlock = useCallback(() => {
     const next = [...blocksRef.current, defaultBlock(blocksRef.current.length)];
     setBlocks(next);
@@ -148,6 +171,21 @@ function SequenceProjet() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span className="font-medium">Retour à l'activité</span>
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2d5a87] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            title="Télécharger en PDF"
+          >
+            {downloadingPdf ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            )}
+            <span className="font-medium">Télécharger PDF</span>
           </button>
         </div>
       </div>

@@ -53,3 +53,5 @@ export const deleteActivite = async (id) => {
     throw error;
   }
 };
+
+// NB: téléchargement ZIP supprimé (bouton retiré côté UI)

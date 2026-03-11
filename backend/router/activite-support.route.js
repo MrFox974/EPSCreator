@@ -8,6 +8,9 @@ route.get('/activites/classe/:classeId', controller.getByClasse);
 // GET /api/activites/:id - Récupérer une activité par ID
 route.get('/activites/:id', controller.getById);
 
+// GET /api/activites/:id/documents.zip - Télécharger un ZIP (leçons + séquence)
+route.get('/activites/:id/documents.zip', controller.downloadDocumentsZip);
+
 // POST /api/activites - Créer une activité
 route.post('/activites', controller.create);
 

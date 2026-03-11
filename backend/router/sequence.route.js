@@ -8,6 +8,12 @@ route.get('/sequences/activite/:activiteId', controller.getByActivite);
 // GET /api/sequences/:id - Récupérer une séquence par ID
 route.get('/sequences/:id', controller.getById);
 
+// GET /api/sequences/:id/pdf/references - Télécharger PDF Références
+route.get('/sequences/:id/pdf/references', controller.getReferencesPdfById);
+
+// GET /api/sequences/:id/pdf/projet - Télécharger PDF Projet
+route.get('/sequences/:id/pdf/projet', controller.getProjetPdfById);
+
 // POST /api/sequences - Créer une nouvelle séquence
 route.post('/sequences', controller.create);
 
