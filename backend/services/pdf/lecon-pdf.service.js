@@ -24,6 +24,7 @@ function formatContent(value) {
 /** Construit le HTML complet d'une leçon pour impression PDF */
 function buildLeconHtml(fiche) {
   const title = fiche?.titre || 'Préparation leçon EPS';
+  const rangementBilan = parseJsonObject(fiche?.rangement_bilan);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -49,6 +50,9 @@ function buildLeconHtml(fiche) {
 
     .section-title { text-align: center; color: #1e3a5f; font-weight: 800; font-size: 12pt; margin: 6mm 0 3mm; }
     .situations-subtitle { text-align: center; color: #1e3a5f; font-size: 10pt; margin: 0 0 4mm 0; }
+    .stack { display: grid; grid-template-columns: 1fr; gap: 4mm; }
+    .small-block { border: 2pt solid #4a90a4; border-radius: 6pt; padding: 6pt; break-inside: avoid; page-break-inside: avoid; }
+    .small-block-title { background: #4a90a4; color: #fff; font-weight: 700; padding: 6pt 8pt; border-radius: 5pt; font-size: 10pt; }
     /* Remplir la page au maximum. Pas de saut forcé entre sections : si 2 blocs tiennent sur une page, on les met. Saut uniquement si un bloc (titre + contenu) ne rentre pas en entier. */
     .section-block, .subsection-block {
       break-before: auto; page-break-before: auto;
@@ -138,6 +142,24 @@ function buildLeconHtml(fiche) {
     <p class="situations-subtitle">... PRÉSENTATION DE L'OBJECTIF (BILAN)</p>
     ${buildSituationsSection(fiche)}
   </div>
+
+  <div class="section-block">
+    <div class="section-title">RANGEMENT + BILAN</div>
+    <div class="stack">
+      <div class="small-block"><div class="small-block-title">Apprentissage</div></div>
+      <div class="small-block"><div class="small-block-title">Lien avec l'objet d'enseignement + évaluation</div></div>
+      <div class="small-block"><div class="small-block-title">Remerciment</div></div>
+      <div class="small-block"><div class="small-block-title">Bilan individuel</div></div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">ANALYSE REFLEXIVE</div>
+    <div class="card">
+      <div class="card-header" style="background:#f2994a;">Analyse réflexive</div>
+      <div class="card-body rich-content" style="border-color:#f2994a; min-height: 55mm;">${formatContent(rangementBilan?.analyse_reflexive)}</div>
+    </div>
+  </div>
 </body>
 </html>`;
 }
@@ -148,6 +170,15 @@ function parseSituations(jsonString) {
     return Array.isArray(arr) ? arr : [];
   } catch {
     return [];
+  }
+}
+
+function parseJsonObject(jsonString) {
+  try {
+    const obj = JSON.parse(jsonString || '{}');
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : {};
+  } catch {
+    return {};
   }
 }
 
