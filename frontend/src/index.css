@@ -4,17 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Empêcher le débordement horizontal sur mobile */
+/* Empêcher le débordement horizontal sur mobile + retour à la ligne au mot partout */
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
+  word-break: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
-/* Casser les mots longs pour éviter le débordement */
+/* Page leçon : forcer retour à la ligne AU MOT pour tout le contenu (paragraphes, blocs) */
+.lecon-content,
+.lecon-content * {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+}
+
+/* Retour à la ligne au mot (pas à la lettre) ; couper un mot uniquement s’il dépasse.
+   Utilisé sur les conteneurs de blocs pour forcer l’héritage et battre d’éventuels utilitaires. */
 .break-words {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
 }
 
 /* add the code bellow */ 
@@ -30,7 +42,36 @@ html, body {
     }
   }
 
-/* Styles pour le contenu HTML généré par l'éditeur riche (Quill) */
+/* Styles pour le contenu HTML généré par l'éditeur riche (Quill) — retour à la ligne au mot */
+.rich-content,
+.rich-content.wrap-at-word {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+}
+
+/* Forcer le retour au mot sur tous les nœuds du contenu riche (priorité max) */
+.rich-content.wrap-at-word,
+.rich-content.wrap-at-word p,
+.rich-content.wrap-at-word span,
+.rich-content.wrap-at-word div,
+.rich-content.wrap-at-word li,
+.rich-content.wrap-at-word ul,
+.rich-content.wrap-at-word ol {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+}
+
+/* Tous les blocs de contenu (cartes, sections) : retour à la ligne au mot */
+.rich-content p,
+.rich-content span,
+.rich-content div,
+.rich-content li {
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
 .rich-content ul,
 .rich-content ol {
   padding-left: 1.5em;

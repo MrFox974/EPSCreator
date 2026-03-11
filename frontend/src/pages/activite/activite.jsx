@@ -23,9 +23,8 @@ import { CSS } from '@dnd-kit/utilities';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
 import { getActiviteById, updateActivite } from '../../../utils/activite.api';
-import { createFiche, deleteFiche, reorderFiches, getFicheById } from '../../../utils/fiche-eps.api';
+import { createFiche, deleteFiche, reorderFiches, downloadFichePdf } from '../../../utils/fiche-eps.api';
 import { getSequencesByActivite, createSequence, deleteSequence } from '../../../utils/sequence.api';
-import { generateLeconPDFFromData } from '../../../utils/pdf-generator';
 
 // Désactiver toutes les animations
 const animateLayoutChanges = () => false;
@@ -314,18 +313,22 @@ function Activite() {
     }
   };
 
-  // Télécharger une leçon en PDF
+  // Télécharger une leçon en PDF (Option B - serveur)
   const handleDownloadPDF = async (lecon) => {
     try {
-      // Charger la leçon complète
-      const data = await getFicheById(lecon.id);
-      if (data.fiche) {
-        const filename = `${lecon.titre || 'lecon'}_${lecon.lecon_numero || ''}`.replace(/[^a-z0-9]/gi, '_');
-        await generateLeconPDFFromData(data.fiche, filename);
-      }
+      const response = await downloadFichePdf(lecon.id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lecon_${lecon.lecon_numero || lecon.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erreur lors du téléchargement PDF:', error);
-      alert('Erreur lors de la génération du PDF');
+      alert('Erreur lors du téléchargement du PDF');
     }
   };
 

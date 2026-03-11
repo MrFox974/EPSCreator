@@ -1,4 +1,5 @@
 const FicheEPS = require('../models/FicheEPS');
+const leconPdfService = require('../services/pdf/lecon-pdf.service');
 
 /**
  * Récupérer toutes les fiches EPS
@@ -166,5 +167,36 @@ exports.reorder = async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la réorganisation:', error);
     res.status(500).json({ error: 'Erreur serveur', details: error.message });
+  }
+};
+
+/**
+ * Télécharger une fiche EPS en PDF (génération serveur - Option B)
+ * GET /api/fiche-eps/:id/pdf
+ */
+exports.getPdfById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fiche = await FicheEPS.findByPk(id);
+
+    if (!fiche) {
+      return res.status(404).json({ error: 'Fiche non trouvée' });
+    }
+
+    const ficheJson = fiche.toJSON();
+    const safeName = `${(ficheJson.titre || 'lecon')}_${ficheJson.lecon_numero || ''}`
+      .replace(/[^a-z0-9]/gi, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80) || 'lecon';
+
+    const pdfBuffer = await leconPdfService.generateFicheEpsPdfBuffer(ficheJson);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}.pdf"`);
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    console.error('Erreur génération PDF fiche EPS:', error);
+    return res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 };

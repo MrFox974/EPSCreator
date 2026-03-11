@@ -251,11 +251,11 @@ function Sequence() {
                 +
               </button>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="space-y-2">
                 {socleCommun.map((domaine, index) => (
                   <div key={index} className="flex items-start gap-2 group">
-                    <div className="flex-1 bg-[#a6db6a] text-white rounded-lg p-2 border border-[#92d050]/40">
+                    <div className="flex-1 min-w-0 bg-[#a6db6a] text-white rounded-lg p-2 border border-[#92d050]/40">
                       <EditableField
                         value={domaine}
                         onChange={(val) => handleListItemChange('socle_commun', index, val)}
@@ -287,7 +287,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Projet établissement</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="projet_etablissement" placeholder="Ex: Favoriser la réussite de tous les élèves" />
               </div>
@@ -299,7 +299,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Projet EPS</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md space-y-4">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0 space-y-4">
               <div>
                 <span className="text-[#92d050] font-semibold block mb-1">Axe prioritaire :</span>
                 <div className="text-[#333] text-base">
@@ -327,11 +327,11 @@ function Sequence() {
                 +
               </button>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="space-y-2">
                 {attendusCycle.map((attendu, index) => (
                   <div key={index} className="flex items-start gap-2 group">
-                    <div className="flex-1 bg-white rounded-lg p-2 border border-[#92d050]/30">
+                    <div className="flex-1 min-w-0 bg-white rounded-lg p-2 border border-[#92d050]/30">
                       <EditableField
                         value={attendu}
                         onChange={(val) => handleListItemChange('attendus_fin_cycle', index, val)}
@@ -361,7 +361,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Projet de classe</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md space-y-4">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0 space-y-4">
               <div>
                 <span className="text-red-600 font-semibold block mb-1">Moteur :</span>
                 <div className="text-[#333] text-base">
@@ -388,7 +388,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Condition d'enseignement</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="conditions_enseignement" placeholder="Ex: 2 grands terrains de 26 x 13. Des ballons de taille 6-7. 4 paniers..." />
               </div>
@@ -400,7 +400,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Situation d'observation / Évaluation diagnostique</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="situation_observation" placeholder="Décrire la situation d'observation ou d'évaluation diagnostique..." />
               </div>
@@ -412,7 +412,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Comportement observés</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="comportements_observes" placeholder="Décrire les comportements observés chez les élèves..." />
               </div>
@@ -424,7 +424,7 @@ function Sequence() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Hypothèses explicatives / problème à résoudre</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="hypotheses_explicatives" placeholder="Expliquer les hypothèses et le problème à résoudre..." />
               </div>

@@ -58,23 +58,23 @@ function SituationCard({
           <tbody>
             <tr className="border-b border-gray-200">
               <td className="bg-[#d9edf7] px-4 py-3 font-semibold text-[#1e3a5f] w-1/3 border-r border-gray-200">BUT</td>
-              <td className="px-4 py-3 bg-white"><SituationField fieldName="but" /></td>
+              <td className="px-4 py-3 bg-white break-words min-w-0"><SituationField fieldName="but" /></td>
             </tr>
             <tr className="border-b border-gray-200">
               <td className="bg-[#d9edf7] px-4 py-3 font-semibold text-[#1e3a5f] border-r border-gray-200">CONSIGNE</td>
-              <td className="px-4 py-3 bg-white"><SituationField fieldName="consigne" /></td>
+              <td className="px-4 py-3 bg-white break-words min-w-0"><SituationField fieldName="consigne" /></td>
             </tr>
             <tr className="border-b border-gray-200">
               <td className="bg-[#d9edf7] px-4 py-3 font-semibold text-[#1e3a5f] border-r border-gray-200">CRITERES DE REUSSITE</td>
-              <td className="px-4 py-3 bg-white"><SituationField fieldName="criteres_reussite" /></td>
+              <td className="px-4 py-3 bg-white break-words min-w-0"><SituationField fieldName="criteres_reussite" /></td>
             </tr>
             <tr className="border-b border-gray-200">
               <td className="bg-[#d9edf7] px-4 py-3 font-semibold text-[#1e3a5f] border-r border-gray-200">CRITERES DE REALISATION</td>
-              <td className="px-4 py-3 bg-white"><SituationField fieldName="criteres_realisation" /></td>
+              <td className="px-4 py-3 bg-white break-words min-w-0"><SituationField fieldName="criteres_realisation" /></td>
             </tr>
             <tr>
               <td className="bg-[#d9edf7] px-4 py-3 font-semibold text-[#1e3a5f] border-r border-gray-200">AMÉNAGEMENT</td>
-              <td className="px-4 py-3 bg-white"><SituationField fieldName="amenagement" /></td>
+              <td className="px-4 py-3 bg-white break-words min-w-0"><SituationField fieldName="amenagement" /></td>
             </tr>
           </tbody>
         </table>

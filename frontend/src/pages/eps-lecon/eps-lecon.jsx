@@ -9,8 +9,7 @@ import EditableField from '../../components/EditableField';
 import SavePopup from '../../components/SavePopup';
 import SituationCard from '../../components/SituationCard';
 import ConfirmModal from '../../components/ConfirmModal';
-import { getFicheById, updateFiche } from '../../../utils/fiche-eps.api';
-import { generateLeconPDFFromData } from '../../../utils/pdf-generator';
+import { downloadFichePdf, getFicheById, updateFiche } from '../../../utils/fiche-eps.api';
 
 // Situation vide par défaut
 const emptySituation = {
@@ -279,15 +278,23 @@ function EpsLecon() {
     setConfirmModal({ isOpen: false, type: null, index: null });
   }, []);
 
-  // Télécharger la leçon en PDF
+  // Télécharger la leçon en PDF (Option B - serveur)
   const handleDownloadPDF = useCallback(async () => {
     try {
       const currentFiche = ficheRef.current;
-      const filename = `${currentFiche.titre || 'lecon'}_${currentFiche.lecon_numero || ''}`.replace(/[^a-z0-9]/gi, '_');
-      await generateLeconPDFFromData(currentFiche, filename);
+      const response = await downloadFichePdf(currentFiche.id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lecon_${currentFiche.lecon_numero || currentFiche.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erreur lors du téléchargement PDF:', error);
-      alert('Erreur lors de la génération du PDF');
+      alert('Erreur lors du téléchargement du PDF');
     }
   }, []);
 
@@ -345,6 +352,17 @@ function EpsLecon() {
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
+      {/* Forcer retour à la ligne au mot (priorité sur tout le contenu de la leçon) */}
+      <style>{`
+        .lecon-content,
+        .lecon-content *,
+        .lecon-content *::before,
+        .lecon-content *::after {
+          word-break: normal !important;
+          overflow-wrap: break-word !important;
+          word-wrap: break-word !important;
+        }
+      `}</style>
       {/* Barre de navigation */}
       <div className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -377,7 +395,7 @@ function EpsLecon() {
         </div>
       </div>
       
-      <div className="max-w-5xl mx-auto overflow-hidden break-words">
+      <div className="max-w-5xl mx-auto overflow-hidden lecon-content">
         
         {/* En-tête - Préparation leçon EPS */}
         <header className="py-6 px-6 bg-white">
@@ -437,14 +455,14 @@ function EpsLecon() {
 
         {/* Bandeau bleu foncé */}
         <div className="bg-[#1e3a5f] py-3 px-6">
-          <p className="text-white text-center text-base md:text-lg font-semibold tracking-wide">
+          <div className="text-white text-center text-base md:text-lg font-semibold tracking-wide">
             <EditableField
               value={fiche.bandeau_titre}
               onChange={handleFieldChange}
               fieldName="bandeau_titre"
               className="text-white"
             />
-          </p>
+          </div>
         </div>
 
         {/* Section OBJET D'ENSEIGNEMENT - fond gris */}
@@ -453,7 +471,7 @@ function EpsLecon() {
             <h2 className="text-[#1e3a5f] font-bold text-lg md:text-xl whitespace-nowrap">
               OBJET D'ENSEIGNEMENT
             </h2>
-            <div className="text-[#1e3a5f] text-base flex-1">
+            <div className="text-[#1e3a5f] text-base flex-1 min-w-0">
               <SimpleEditable fieldName="objet_enseignement" />
             </div>
           </div>
@@ -515,7 +533,7 @@ function EpsLecon() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Champs d'apprentissage :</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
                 <MultilineEditable fieldName="champs_apprentissage" />
               </div>
@@ -527,7 +545,7 @@ function EpsLecon() {
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
               <h3 className="text-white font-semibold text-base">Compétences attendues :</h3>
             </div>
-            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md">
+            <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base whitespace-pre-line">
                 <MultilineEditable fieldName="competences_attendues" />
               </div>
@@ -555,7 +573,7 @@ function EpsLecon() {
             {/* 2 cartes côte à côte */}
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               {/* Intension pédagogique */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                   <h4 className="text-white font-semibold text-base">Intension pédagogique</h4>
                 </div>
@@ -567,7 +585,7 @@ function EpsLecon() {
               </div>
 
               {/* Intension éducatif */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                   <h4 className="text-white font-semibold text-base">Intension éducatif</h4>
                 </div>
@@ -584,7 +602,7 @@ function EpsLecon() {
               <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                 <h4 className="text-white font-semibold text-base">Objectif - vue enseignante</h4>
               </div>
-              <div className="bg-white border-2 border-[#4a90a4] border-t-0 p-4 rounded-b-md">
+              <div className="bg-white border-2 border-[#4a90a4] border-t-0 p-4 rounded-b-md min-w-0">
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="objectif_enseignante" />
                 </div>
@@ -596,7 +614,7 @@ function EpsLecon() {
               <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                 <h4 className="text-white font-semibold text-base">Objectif - vue élève</h4>
               </div>
-              <div className="bg-white border-2 border-[#4a90a4] border-t-0 p-4 rounded-b-md">
+              <div className="bg-white border-2 border-[#4a90a4] border-t-0 p-4 rounded-b-md min-w-0">
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="objectif_eleve" />
                 </div>
@@ -615,7 +633,7 @@ function EpsLecon() {
               <div className="bg-[#6b7b5a] px-4 py-3 rounded-t-md">
                 <h4 className="text-white font-semibold text-base">QUOI - Le ciblage</h4>
               </div>
-              <div className="bg-white border-2 border-[#6b7b5a] border-t-0 p-4 rounded-b-md">
+              <div className="bg-white border-2 border-[#6b7b5a] border-t-0 p-4 rounded-b-md min-w-0">
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="quoi_ciblage" />
                 </div>
@@ -627,7 +645,7 @@ function EpsLecon() {
               <div className="bg-[#6b7b5a] px-4 py-3 rounded-t-md">
                 <h4 className="text-white font-semibold text-base">COMMENT - Contenu d'enseignement principal</h4>
               </div>
-              <div className="bg-white border-2 border-[#6b7b5a] border-t-0 p-4 rounded-b-md">
+              <div className="bg-white border-2 border-[#6b7b5a] border-t-0 p-4 rounded-b-md min-w-0">
                 <div className="text-[#333] text-base whitespace-pre-line">
                   <MultilineEditable fieldName="comment_enseignement" />
                 </div>
@@ -646,7 +664,7 @@ function EpsLecon() {
               <div className="bg-[#e74c3c] px-4 py-3 rounded-t-md">
                 <h4 className="text-white font-semibold text-base">Points de sécurité</h4>
               </div>
-              <div className="bg-white border-2 border-[#e74c3c] border-t-0 p-4 rounded-b-md">
+              <div className="bg-white border-2 border-[#e74c3c] border-t-0 p-4 rounded-b-md min-w-0">
                 <div className="text-[#333] text-base">
                   <MultilineEditable fieldName="points_securite" />
                 </div>
@@ -663,7 +681,7 @@ function EpsLecon() {
             {/* 2 cartes côte à côte */}
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               {/* Situations d'apprentissages */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                   <h4 className="text-white font-semibold text-base">Situations d'apprentissages</h4>
                 </div>
@@ -675,7 +693,7 @@ function EpsLecon() {
               </div>
 
               {/* Générale */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
                   <h4 className="text-white font-semibold text-base">Générale</h4>
                 </div>
@@ -697,7 +715,7 @@ function EpsLecon() {
             {/* Tableau 2 colonnes */}
             <div className="grid md:grid-cols-2 gap-0 mb-4">
               {/* Observations attendues */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3">
                   <h4 className="text-white font-semibold text-base">Observations attendues</h4>
                 </div>
@@ -709,7 +727,7 @@ function EpsLecon() {
               </div>
 
               {/* Régulation */}
-              <div>
+              <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3">
                   <h4 className="text-white font-semibold text-base">Régulation</h4>
                 </div>

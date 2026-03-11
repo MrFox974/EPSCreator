@@ -83,6 +83,15 @@ export const deleteFiche = async (id) => {
 };
 
 /**
+ * Télécharger une fiche EPS en PDF (généré côté serveur - Option B)
+ * Retourne la réponse axios (response.data = Blob)
+ */
+export const downloadFichePdf = async (id) => {
+  const response = await api.get(`/api/fiche-eps/${id}/pdf`, { responseType: 'blob' });
+  return response;
+};
+
+/**
  * Réordonner les leçons
  */
 export const reorderFiches = async (orderedIds) => {

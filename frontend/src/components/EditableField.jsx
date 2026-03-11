@@ -147,6 +147,31 @@ function EditableField({
   const displayValue = value || '';
   const hasContent = displayValue.trim().length > 0 && displayValue !== '<p><br></p>';
 
+  /**
+   * Nettoie le HTML pour retirer tout style inline qui forcerait une césure à la lettre
+   * (word-break, overflow-wrap), afin que notre CSS "retour à la ligne au mot" s'applique.
+   */
+  const sanitizeHtmlForWordWrap = (html) => {
+    if (!html || typeof html !== 'string') return html;
+    // 1) Remplacer les espaces insécables (Quill en met souvent partout) par des espaces normaux
+    //    sinon les retours à la ligne "au mot" ne peuvent pas se faire.
+    const normalizedSpaces = html
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00A0/g, ' ');
+
+    // 2) Retirer les styles inline qui imposent une césure à la lettre
+    return normalizedSpaces.replace(/\s*style="([^"]*)"\s*/gi, (_, styleContent) => {
+      const cleaned = styleContent
+        .split(';')
+        .filter((decl) => {
+          const prop = decl.split(':')[0]?.trim().toLowerCase();
+          return prop && prop !== 'word-break' && prop !== 'overflow-wrap' && prop !== 'word-wrap';
+        })
+        .join('; ');
+      return cleaned ? ` style="${cleaned}" ` : ' ';
+    });
+  };
+
   // Fonction pour afficher le HTML en texte
   const renderContent = () => {
     if (!hasContent) {
@@ -154,11 +179,12 @@ function EditableField({
     }
 
     if (multiline || richText) {
-      // Afficher le HTML rendu avec les styles pour listes et formatage
+      const safeHtml = sanitizeHtmlForWordWrap(displayValue);
       return (
         <div 
-          className="rich-content"
-          dangerouslySetInnerHTML={{ __html: displayValue }}
+          className="rich-content wrap-at-word"
+          style={{ wordBreak: 'normal', overflowWrap: 'break-word', whiteSpace: 'normal' }}
+          dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
       );
     }
@@ -173,6 +199,7 @@ function EditableField({
       onDoubleClick={handleDoubleClick}
       className={[
         'min-h-[1.5em]',
+        'min-w-0',
         'rounded',
         'px-1',
         '-mx-1',

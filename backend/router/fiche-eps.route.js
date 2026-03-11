@@ -5,6 +5,9 @@ const controller = require('../controllers/fiche-eps.controller');
 // GET /api/fiche-eps - Récupérer toutes les fiches
 route.get('/fiche-eps', controller.getAll);
 
+// GET /api/fiche-eps/:id/pdf - Télécharger la fiche en PDF (Option B - serveur)
+route.get('/fiche-eps/:id/pdf', controller.getPdfById);
+
 // GET /api/fiche-eps/:id - Récupérer une fiche par ID
 route.get('/fiche-eps/:id', controller.getById);
 
