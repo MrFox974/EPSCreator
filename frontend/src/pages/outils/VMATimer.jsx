@@ -175,9 +175,10 @@ export default function VMATimer() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [displayTime, setDisplayTime] = useState('00.0');
   const [announcementMade, setAnnouncementMade] = useState(false);
-  const [currentCourseNumber, setCurrentCourseNumber] = useState(0);
   const [audioReady, setAudioReady] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
+  const [isCounterExpanded, setIsCounterExpanded] = useState(false);
+  const [exerciseCount, setExerciseCount] = useState(0);
 
   const isPlotsCounter = mode === 'plots-counter';
 
@@ -280,10 +281,10 @@ export default function VMATimer() {
     setCurrentPhase('idle');
     setCurrentIndex(0);
     setCurrentPlot(0);
+    setExerciseCount(0);
     setTimeLeft(0);
     setDisplayTime('00.0');
     setAnnouncementMade(false);
-    setCurrentCourseNumber(0);
     beepedSecondsRef.current = new Set();
     restTensAnnouncedRef.current = new Set();
     phaseCompleteTriggeredRef.current = false;
@@ -311,9 +312,9 @@ export default function VMATimer() {
     setCurrentPhase('countdown');
     setCurrentIndex(0);
     setCurrentPlot(0);
+    setExerciseCount(0);
     setTimeLeft(preparationTime);
     setAnnouncementMade(false);
-    setCurrentCourseNumber(0);
     beepedSecondsRef.current = new Set();
     spokenCountdownRef.current = new Set();
     restTensAnnouncedRef.current = new Set();
@@ -355,8 +356,8 @@ export default function VMATimer() {
     // Mode Plots Counter : logique simple préparation -> exercice (référence) -> repos -> boucle
     if (isPlotsCounter) {
       if (currentPhase === 'countdown') {
+        setExerciseCount(1);
         setCurrentPhase('running');
-        setCurrentCourseNumber(1);
         setTimeLeft(referenceTime);
         setAnnouncementMade(false);
         nextRunnersAnnouncementDoneRef.current = false;
@@ -376,8 +377,8 @@ export default function VMATimer() {
           lastSecondRef.current = Math.ceil(restTime);
         } else {
           // Repos à 0s : on enchaîne immédiatement sur l'exercice suivant
+          setExerciseCount((prev) => prev + 1);
           setCurrentPhase('running');
-          setCurrentCourseNumber((prev) => prev + 1);
           setTimeLeft(referenceTime);
           setAnnouncementMade(false);
           nextRunnersAnnouncementDoneRef.current = false;
@@ -389,7 +390,6 @@ export default function VMATimer() {
         // Après la première boucle : pas de nouvelle préparation,
         // on enchaîne directement Exercice ↔ Repos
         setCurrentPhase('running');
-        setCurrentCourseNumber((prev) => prev + 1);
         setTimeLeft(referenceTime);
         setAnnouncementMade(false);
         nextRunnersAnnouncementDoneRef.current = false;
@@ -723,13 +723,13 @@ export default function VMATimer() {
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => setPlots(Math.max(1, plots - 1))}
-                    className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                     disabled={isRunning}
                   >-</button>
-                  <span className="text-3xl font-bold w-14">{plots}</span>
+                  <span className="text-2xl font-bold w-12">{plots}</span>
                   <button
                     onClick={() => setPlots(plots + 1)}
-                    className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                     disabled={isRunning}
                   >+</button>
                 </div>
@@ -740,13 +740,13 @@ export default function VMATimer() {
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => setReferenceTime(Math.max(5, referenceTime - 5))}
-                    className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                     disabled={isRunning}
                   >-</button>
-                  <span className="text-3xl font-bold w-16">{referenceTime}</span>
+                  <span className="text-2xl font-bold w-16">{referenceTime}</span>
                   <button
                     onClick={() => setReferenceTime(referenceTime + 5)}
-                    className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                     disabled={isRunning}
                   >+</button>
                 </div>
@@ -758,13 +758,13 @@ export default function VMATimer() {
               <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={() => setDistance(Math.max(5, distance - 5))}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >-</button>
-                <span className="text-3xl font-bold w-14">{distance}</span>
+                <span className="text-2xl font-bold w-12">{distance}</span>
                 <button
                   onClick={() => setDistance(distance + 5)}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >+</button>
               </div>
@@ -775,13 +775,13 @@ export default function VMATimer() {
               <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={() => setRestTime(Math.max(0, restTime - 5))}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >-</button>
-                <span className="text-3xl font-bold w-14">{restTime}</span>
+                <span className="text-2xl font-bold w-12">{restTime}</span>
                 <button
                   onClick={() => setRestTime(restTime + 5)}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >+</button>
               </div>
@@ -792,13 +792,13 @@ export default function VMATimer() {
               <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={() => setPreparationTime(Math.max(5, preparationTime - 5))}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >-</button>
-                <span className="text-3xl font-bold w-14">{preparationTime}</span>
+                <span className="text-2xl font-bold w-12">{preparationTime}</span>
                 <button
                   onClick={() => setPreparationTime(preparationTime + 5)}
-                  className="w-11 h-11 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-2xl font-bold"
+                  className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >+</button>
               </div>
@@ -807,19 +807,36 @@ export default function VMATimer() {
         </div>
 
         {/* Timer Display */}
-        <div className={`relative rounded-2xl p-10 mb-6 text-center transition-all duration-500 ${getPhaseColor()}`}>
-          <div className="absolute top-3 right-3 text-xl opacity-90" title="Compteur d'exercice">
-            🏃
-          </div>
+        <div
+          className={`relative rounded-2xl mb-6 text-center transition-all duration-500 ${getPhaseColor()} ${
+            isCounterExpanded ? 'p-10 md:p-12 shadow-2xl shadow-cyan-500/20' : 'p-8'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setIsCounterExpanded((prev) => !prev)}
+            className="absolute top-3 right-3 p-2 rounded-lg bg-black/20 hover:bg-black/35 transition-colors"
+            title={isCounterExpanded ? 'Réduire le compteur' : 'Agrandir le compteur'}
+          >
+            {isCounterExpanded ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9H5m0 0V5m0 4l5-5m5 5h4m0 0V5m0 4l-5-5m-5 11H5m0 0v4m0-4l5 5m5-5h4m0 0v4m0-4l-5 5" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3H5a2 2 0 00-2 2v3m16-5h-3m3 0v3M3 16v3a2 2 0 002 2h3m11-5v3a2 2 0 01-2 2h-3" />
+              </svg>
+            )}
+          </button>
           <div className="text-sm uppercase tracking-wider mb-2 opacity-80">
             {getPhaseDisplay()}
           </div>
-          <div className="text-8xl md:text-9xl font-mono font-bold tracking-tight">
+          <div className={`${isCounterExpanded ? 'text-8xl md:text-9xl' : 'text-7xl'} font-mono font-bold tracking-tight`}>
             {displayTime || '00.0'}
           </div>
-          {isPlotsCounter && currentCourseNumber > 0 && currentPhase === 'running' && (
-            <div className="mt-2 text-xl md:text-2xl font-semibold tracking-wide text-white/95">
-              Course {currentCourseNumber}
+          {isPlotsCounter && restTime === 0 && currentPhase === 'running' && (
+            <div className={`mt-2 font-semibold tracking-wide ${isCounterExpanded ? 'text-3xl' : 'text-xl'}`}>
+              course {exerciseCount}
             </div>
           )}
           {currentPhase === 'running' && (
@@ -827,7 +844,7 @@ export default function VMATimer() {
               {Array.from({ length: plots }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-3 rounded-full transition-all ${
+                  className={`${isCounterExpanded ? 'w-4 h-4' : 'w-3 h-3'} rounded-full transition-all ${
                     i < currentPlot ? 'bg-white' :
                     i === currentPlot ? 'bg-white animate-pulse scale-125' :
                     'bg-white/30'
@@ -850,9 +867,9 @@ export default function VMATimer() {
               <button
                 onClick={startWorkout}
                 disabled={(!isPlotsCounter && workoutList.length === 0) || !audioReady}
-                className="px-8 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-xl font-semibold text-lg transition flex items-center gap-2"
+                className={`${isCounterExpanded ? 'px-10 py-5 text-2xl' : 'px-8 py-4 text-lg'} bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-xl font-semibold transition flex items-center gap-2`}
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <svg className={`${isCounterExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z"/>
                 </svg>
                 Démarrer
@@ -860,9 +877,9 @@ export default function VMATimer() {
               {currentPhase === 'finished' && (
                 <button
                   onClick={resetTimer}
-                  className="px-8 py-4 bg-slate-600 hover:bg-slate-500 rounded-xl font-semibold text-lg transition flex items-center gap-2"
+                  className={`${isCounterExpanded ? 'px-10 py-5 text-2xl' : 'px-8 py-4 text-lg'} bg-slate-600 hover:bg-slate-500 rounded-xl font-semibold transition flex items-center gap-2`}
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`${isCounterExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   Reset
@@ -873,18 +890,18 @@ export default function VMATimer() {
             <>
               <button
                 onClick={stopWorkout}
-                className="px-8 py-4 bg-red-600 hover:bg-red-500 rounded-xl font-semibold text-lg transition flex items-center gap-2"
+                className={`${isCounterExpanded ? 'px-10 py-5 text-2xl' : 'px-8 py-4 text-lg'} bg-red-600 hover:bg-red-500 rounded-xl font-semibold transition flex items-center gap-2`}
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <svg className={`${isCounterExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 6h12v12H6z"/>
                 </svg>
                 Arrêter
               </button>
               <button
                 onClick={resetTimer}
-                className="px-6 py-4 bg-slate-600 hover:bg-slate-500 rounded-xl font-semibold text-lg transition flex items-center gap-2"
+                className={`${isCounterExpanded ? 'px-8 py-5 text-2xl' : 'px-6 py-4 text-lg'} bg-slate-600 hover:bg-slate-500 rounded-xl font-semibold transition flex items-center gap-2`}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`${isCounterExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 Reset
