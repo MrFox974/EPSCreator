@@ -187,6 +187,8 @@ export default function VMATimer() {
   const beepedSecondsRef = useRef(new Set());
   const restTensAnnouncedRef = useRef(new Set());
   const phaseCompleteTriggeredRef = useRef(false);
+  const spokenCountdownRef = useRef(new Set());
+  const nextRunnersAnnouncementDoneRef = useRef(false);
 
   // Load voices on mount
   useEffect(() => {
@@ -283,6 +285,8 @@ export default function VMATimer() {
     beepedSecondsRef.current = new Set();
     restTensAnnouncedRef.current = new Set();
     phaseCompleteTriggeredRef.current = false;
+    spokenCountdownRef.current = new Set();
+    nextRunnersAnnouncementDoneRef.current = false;
     if (timerRef.current) {
       cancelAnimationFrame(timerRef.current);
     }
@@ -308,7 +312,9 @@ export default function VMATimer() {
     setTimeLeft(preparationTime);
     setAnnouncementMade(false);
     beepedSecondsRef.current = new Set();
+    spokenCountdownRef.current = new Set();
     restTensAnnouncedRef.current = new Set();
+    nextRunnersAnnouncementDoneRef.current = false;
     startTimeRef.current = null;
     lastSecondRef.current = null;
 
@@ -341,6 +347,7 @@ export default function VMATimer() {
     startTimeRef.current = null;
     lastSecondRef.current = null;
     beepedSecondsRef.current = new Set();
+    spokenCountdownRef.current = new Set();
 
     // Mode Plots Counter : logique simple préparation -> exercice (référence) -> repos -> boucle
     if (isPlotsCounter) {
@@ -348,25 +355,38 @@ export default function VMATimer() {
         setCurrentPhase('running');
         setTimeLeft(referenceTime);
         setAnnouncementMade(false);
+        nextRunnersAnnouncementDoneRef.current = false;
         targetTimeRef.current = referenceTime;
         startTimeRef.current = performance.now();
         lastSecondRef.current = Math.ceil(referenceTime);
       } else if (currentPhase === 'running') {
         await beepGo();
-        await speak(`${restTime} secondes de repos`);
-        restTensAnnouncedRef.current = new Set();
-        setCurrentPhase('rest');
-        setTimeLeft(restTime);
-        setAnnouncementMade(false);
-        targetTimeRef.current = restTime;
-        startTimeRef.current = performance.now();
-        lastSecondRef.current = Math.ceil(restTime);
+        if (restTime > 0) {
+          await speak(`${restTime} secondes de repos`);
+          restTensAnnouncedRef.current = new Set();
+          setCurrentPhase('rest');
+          setTimeLeft(restTime);
+          setAnnouncementMade(false);
+          targetTimeRef.current = restTime;
+          startTimeRef.current = performance.now();
+          lastSecondRef.current = Math.ceil(restTime);
+        } else {
+          // Repos à 0s : on enchaîne immédiatement sur l'exercice suivant
+          setCurrentPhase('running');
+          setTimeLeft(referenceTime);
+          setAnnouncementMade(false);
+          nextRunnersAnnouncementDoneRef.current = false;
+          targetTimeRef.current = referenceTime;
+          startTimeRef.current = performance.now();
+          lastSecondRef.current = Math.ceil(referenceTime);
+        }
       } else if (currentPhase === 'rest') {
         // Après la première boucle : pas de nouvelle préparation,
         // on enchaîne directement Exercice ↔ Repos
         setCurrentPhase('running');
         setTimeLeft(referenceTime);
         setAnnouncementMade(false);
+        nextRunnersAnnouncementDoneRef.current = false;
         targetTimeRef.current = referenceTime;
         startTimeRef.current = performance.now();
         lastSecondRef.current = Math.ceil(referenceTime);
@@ -516,7 +536,7 @@ export default function VMATimer() {
       setTimeLeft(remaining);
       setDisplayTime(formatTime(remaining));
 
-      if (currentPhase === 'countdown' || currentPhase === 'rest') {
+      if (currentPhase === 'countdown' || currentPhase === 'rest' || (isPlotsCounter && currentPhase === 'running')) {
         if (currentPhase === 'countdown') {
           if (isPlotsCounter) {
             // Annonces spécifiques Plots Counter : début exercice
@@ -554,6 +574,28 @@ export default function VMATimer() {
         if (currentSecond <= 5 && currentSecond >= 1 && !beepedSecondsRef.current.has(currentSecond)) {
           beepedSecondsRef.current.add(currentSecond);
           beepCountdown();
+        }
+
+        if (
+          isPlotsCounter &&
+          currentPhase === 'running' &&
+          currentSecond <= 5 &&
+          currentSecond >= 1 &&
+          !spokenCountdownRef.current.has(currentSecond)
+        ) {
+          spokenCountdownRef.current.add(currentSecond);
+          speak(String(currentSecond));
+        }
+
+        if (
+          isPlotsCounter &&
+          currentPhase === 'running' &&
+          restTime === 0 &&
+          currentSecond === 30 &&
+          !nextRunnersAnnouncementDoneRef.current
+        ) {
+          nextRunnersAnnouncementDoneRef.current = true;
+          speak('Les prochains coureurs, mettez vous en place pour la prochaine course');
         }
       }
 
@@ -727,7 +769,7 @@ export default function VMATimer() {
               <label className="block text-sm text-slate-400 mb-2">Repos (s)</label>
               <div className="flex items-center justify-center gap-2">
                 <button
-                  onClick={() => setRestTime(Math.max(10, restTime - 5))}
+                  onClick={() => setRestTime(Math.max(0, restTime - 5))}
                   className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
                   disabled={isRunning}
                 >-</button>
