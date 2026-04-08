@@ -1,11 +1,11 @@
 /**
  * Modal - Composant modal réutilisable
  */
-function Modal({ isOpen, onClose, title, children }) {
+function Modal({ isOpen, onClose, title, children, wide = false }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -13,7 +13,11 @@ function Modal({ isOpen, onClose, title, children }) {
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-modal-in overflow-hidden">
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full mx-auto animate-modal-in overflow-hidden flex flex-col max-h-[min(90vh,900px)] ${
+          wide ? 'max-w-4xl' : 'max-w-md'
+        }`}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d5a87] px-6 py-4">
           <div className="flex items-center justify-between">
@@ -32,7 +36,9 @@ function Modal({ isOpen, onClose, title, children }) {
         </div>
         
         {/* Content */}
-        <div className="p-6">
+        <div
+          className={`p-6 min-h-0 ${wide ? 'overflow-y-auto flex-1' : ''}`}
+        >
           {children}
         </div>
       </div>

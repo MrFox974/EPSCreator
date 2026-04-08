@@ -4,6 +4,11 @@ import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import EpsLeconSkeleton from './components/skeletons/EpsLeconSkeleton';
 
+const Home = lazy(() => import('./pages/home/Home'));
+const EleveHub = lazy(() => import('./pages/eleve/EleveHub'));
+const EnseignantHub = lazy(() => import('./pages/enseignant/EnseignantHub'));
+const ApplicationHub = lazy(() => import('./pages/enseignant/ApplicationHub'));
+const CourseOrientation = lazy(() => import('./pages/enseignant/CourseOrientation'));
 const Dashboard = lazy(() => import('./pages/dashboard/dashboard'));
 const Activite = lazy(() => import('./pages/activite/activite'));
 const EpsLecon = lazy(() => import('./pages/eps-lecon/eps-lecon'));
@@ -21,12 +26,52 @@ const DashboardSkeleton = () => (
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<ErrorBoundary />}>
-      {/* Dashboard - Page d'accueil */}
+      {/* Accueil — choix Élève / Enseignant */}
       <Route
         index
         element={
           <Suspense fallback={<DashboardSkeleton />}>
+            <Home />
+          </Suspense>
+        }
+      />
+      <Route
+        path="eleve"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <EleveHub />
+          </Suspense>
+        }
+      />
+      <Route
+        path="enseignant"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <EnseignantHub />
+          </Suspense>
+        }
+      />
+      <Route
+        path="enseignant/mes-cours"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
             <Dashboard />
+          </Suspense>
+        }
+      />
+      <Route
+        path="enseignant/application"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <ApplicationHub />
+          </Suspense>
+        }
+      />
+      <Route
+        path="enseignant/application/course-orientation"
+        element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <CourseOrientation />
           </Suspense>
         }
       />

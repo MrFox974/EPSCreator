@@ -65,7 +65,7 @@ function Sequence() {
         }
       } catch (error) {
         console.error('Erreur chargement séquence:', error);
-        navigate('/');
+        navigate('/enseignant/mes-cours');
       } finally {
         setLoading(false);
       }
@@ -149,7 +149,7 @@ function Sequence() {
     if (sequence.activite_support_id) {
       navigate(`/activite/${sequence.activite_support_id}`);
     } else {
-      navigate('/');
+      navigate('/enseignant/mes-cours');
     }
   };
 

@@ -213,7 +213,7 @@ function Activite() {
       setSequences(seqData.sequences || []);
     } catch (error) {
       console.error('Erreur chargement:', error);
-      navigate('/');
+      navigate('/enseignant/mes-cours');
     } finally {
       setLoading(false);
     }
@@ -369,7 +369,7 @@ function Activite() {
       localStorage.setItem('dashboard_expanded_ecoles', JSON.stringify(expandedEcoles));
       localStorage.setItem('dashboard_expanded_classes', JSON.stringify(expandedClasses));
     }
-    navigate('/');
+    navigate('/enseignant/mes-cours');
   };
 
   if (loading) {

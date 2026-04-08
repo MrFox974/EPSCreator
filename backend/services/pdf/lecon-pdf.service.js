@@ -111,29 +111,52 @@ function buildLeconHtml(fiche) {
       <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.intension_pedagogique)}</div>
     </div>
     <div class="card">
-    <div class="card-header" style="background:#4a90a4;">Intension éducatif</div>
-    <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.intension_educatif)}</div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#4a90a4;">Objectif - vue enseignante</div>
-    <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.objectif_enseignante)}</div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#4a90a4;">Objectif - vue élève</div>
-    <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.objectif_eleve)}</div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#6b7b5a;">QUOI - Le ciblage</div>
-    <div class="card-body rich-content" style="border-color:#6b7b5a;">${formatContent(fiche?.quoi_ciblage)}</div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#6b7b5a;">COMMENT - Contenu d'enseignement principal</div>
-    <div class="card-body rich-content" style="border-color:#6b7b5a;">${formatContent(fiche?.comment_enseignement)}</div>
-  </div>
-
+      <div class="card-header" style="background:#4a90a4;">Intension éducatif</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.intension_educatif)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Objectif - vue enseignante</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.objectif_enseignante)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Objectif - vue élève</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.objectif_eleve)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#6b7b5a;">QUOI - Le ciblage</div>
+      <div class="card-body rich-content" style="border-color:#6b7b5a;">${formatContent(fiche?.quoi_ciblage)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#6b7b5a;">COMMENT - Contenu d'enseignement principal</div>
+      <div class="card-body rich-content" style="border-color:#6b7b5a;">${formatContent(fiche?.comment_enseignement)}</div>
+    </div>
     <div class="card">
       <div class="card-header" style="background:#e74c3c;">Points de sécurité</div>
       <div class="card-body rich-content" style="border-color:#e74c3c;">${formatContent(fiche?.points_securite)}</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">DÉROULEMENT DE LA LEÇON</div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Situations d'apprentissages</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.situations_apprentissages)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Générale</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.generale)}</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">RÉGULATIONS PRINCIPALES ATTENDUES</div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Observations attendues</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.observations_attendues)}</div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="background:#4a90a4;">Régulation</div>
+      <div class="card-body rich-content" style="border-color:#4a90a4;">${formatContent(fiche?.regulation)}</div>
     </div>
   </div>
 

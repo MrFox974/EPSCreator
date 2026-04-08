@@ -165,7 +165,7 @@ function EpsLecon() {
       } catch (error) {
         console.error('Erreur chargement fiche:', error);
         // Rediriger vers le dashboard si la fiche n'existe pas
-        navigate('/');
+        navigate('/enseignant/mes-cours');
       } finally {
         setLoading(false);
       }
@@ -281,8 +281,13 @@ function EpsLecon() {
   // Télécharger la leçon en PDF (Option B - serveur)
   const handleDownloadPDF = useCallback(async () => {
     try {
+      const currentId = ficheIdRef.current;
+      if (!currentId) {
+        alert('Impossible de télécharger le PDF : identifiant de leçon manquant.');
+        return;
+      }
       const currentFiche = ficheRef.current;
-      const response = await downloadFichePdf(currentFiche.id);
+      const response = await downloadFichePdf(currentId);
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -372,7 +377,7 @@ function EpsLecon() {
               if (fiche.activite_support_id) {
                 navigate(`/activite/${fiche.activite_support_id}`);
               } else {
-                navigate('/');
+                navigate('/enseignant/mes-cours');
               }
             }}
             className="flex items-center gap-2 text-slate-600 hover:text-[#1e3a5f] transition-colors"
