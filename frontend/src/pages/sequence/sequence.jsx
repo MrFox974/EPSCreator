@@ -445,10 +445,10 @@ function Sequence() {
             </div>
           </div>
 
-          {/* 8. Comportement observés */}
+          {/* 8. Comportements observés */}
           <div className="mb-6">
             <div className="bg-[#92d050] px-4 py-3 rounded-t-md">
-              <h3 className="text-white font-semibold text-base">Comportement observés</h3>
+              <h3 className="text-white font-semibold text-base">Comportements observés</h3>
             </div>
             <div className="bg-[#e8f5e0] border-2 border-[#92d050] border-t-0 p-4 rounded-b-md min-w-0">
               <div className="text-[#333] text-base">
