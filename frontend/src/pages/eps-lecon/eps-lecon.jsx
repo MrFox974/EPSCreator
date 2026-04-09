@@ -867,10 +867,10 @@ function EpsLecon() {
               </div>
             </div>
 
-            {/* Remerciment */}
+            {/* Remerciements */}
             <div className="border-2 border-[#4a90a4] rounded-lg p-4">
               <div className="bg-[#4a90a4] px-4 py-3 rounded-md">
-                <h4 className="text-white font-semibold text-lg">Remerciment</h4>
+                <h4 className="text-white font-semibold text-lg">Remerciements</h4>
               </div>
             </div>
 
