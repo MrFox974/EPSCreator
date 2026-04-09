@@ -589,10 +589,10 @@ function EpsLecon() {
                 </div>
               </div>
 
-              {/* Intension éducatif */}
+              {/* Intension éducative */}
               <div className="min-w-0">
                 <div className="bg-[#4a90a4] px-4 py-3 rounded-t-md">
-                  <h4 className="text-white font-semibold text-base">Intension éducatif</h4>
+                  <h4 className="text-white font-semibold text-base">Intension éducative</h4>
                 </div>
                 <div className="bg-white border-2 border-[#4a90a4] border-t-0 p-4 rounded-b-md">
                   <div className="text-[#333] text-base">
